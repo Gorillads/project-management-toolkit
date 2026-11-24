@@ -1,0 +1,23 @@
+/* Same palette as the CV Builder, so the two tools feel like siblings. */
+:root {
+  color-scheme: light dark;
+  --bg: #f5f6f8; --panel: #ffffff; --border: #dde1e6; --text: #1c2430; --text-soft: #5a6472;
+  --accent: #416180; --accent-soft: #597ea3; --accent-wash: #e8eef4;
+  --danger: #a3402f; --danger-wash: #f6e4e0; --warn: #9a6a12; --warn-wash: #f6edd9; --ok: #3d7a4f; --ok-wash: #e2efe5;
+  --heat-1: #e3ece6; --heat-2: #efe9d2; --heat-3: #f2dcc8; --heat-4: #efc9bf;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14181f; --panel: #1c222c; --border: #2e3542; --text: #e7eaee; --text-soft: #9aa4b2;
+    --accent: #7fa5c7; --accent-soft: #6c92b3; --accent-wash: #22303f;
+    --danger: #d97a68; --danger-wash: #3a2420; --warn: #d6a74f; --warn-wash: #352b18; --ok: #7dbb8d; --ok-wash: #1d3124;
+    --heat-1: #1f2d25; --heat-2: #2f2c1c; --heat-3: #3a2a1e; --heat-4: #462620;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-size: 14px; }
+button, select, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
