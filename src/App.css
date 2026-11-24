@@ -324,3 +324,20 @@ svg .mono { font-family: var(--mono); }
   .kanban, .swot, .two, .dir { grid-template-columns: minmax(0, 1fr); }
   .menu-pop { position: fixed; left: 16px; right: 16px; width: auto; top: 110px; }
 }
+
+/* search, undo, guide */
+.search { position: relative; }
+.search-in { width: 260px; }
+.search-pop { width: 360px; max-height: 420px; overflow-y: auto; }
+.search-row.hi { background: var(--accent-wash); }
+.seg button:disabled { opacity: .35; cursor: default; }
+dialog.guide { border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: min(520px, calc(100vw - 32px)); background: var(--panel); color: var(--text); box-shadow: 0 20px 60px rgba(20,24,31,.3); }
+dialog.guide::backdrop { background: rgba(20,24,31,.45); }
+.guide h2 { margin: 6px 0 8px; font-size: 19px; text-wrap: balance; }
+.guide p { margin: 0; line-height: 1.55; font-size: 14px; color: var(--text); }
+.guide-step { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-soft); }
+.guide-dots { display: flex; gap: 6px; margin: 18px 0 14px; }
+.guide-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+.guide-dots i.on { background: var(--accent); }
+.guide-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+@media (max-width: 760px) { .search, .search-in { width: 100%; } .search { flex: 1 1 100%; order: -1; } .search-pop { width: auto; } }

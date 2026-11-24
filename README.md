@@ -42,6 +42,19 @@ Each project chooses which tools it uses in the tool library on the Overview.
   The Decision log shows which typical decisions are made and which are
   still ahead.
 
+## Working in it
+
+- **Search** (Ctrl+K) finds any item by ID or words in its title, role,
+  mitigation or notes, and jumps to it.
+- **Undo / redo** (Ctrl+Z, Ctrl+Shift+Z, or the arrows in the header) per
+  project. Typing in a field undoes with the field's own undo.
+- **How it works** (the ? in the tab bar) is a five-step guide, shown once on
+  the first visit.
+- **Budget from a spreadsheet:** link a CSV with columns Area, Plan, Spent and
+  Forecast (or Område, Plan, Forbrugt, Prognose). Lines are matched by area
+  name, new areas are added, and Danish number formats like `2.010,50` are
+  understood. "Read numbers from a CSV" on a linked file updates it again.
+
 ## Import and export
 
 - **PowerPoint (.pptx):** one deck covering the whole case: overview,

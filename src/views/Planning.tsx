@@ -4,7 +4,8 @@ import { nextId, pScore, sev } from "../lib/links";
 import { uid } from "../data/projects";
 import { Register } from "../components/Register";
 import { Chip, Chips, ItemEditor, ItemSelect, LinkEditor, ViewHead, rowClass, useApp, type Field } from "../components/ui";
-import { downloadBlob, budgetCsv } from "../lib/exporters";
+import { downloadBlob, budgetCsv, readBudgetCsv } from "../lib/exporters";
+import { useState } from "react";
 
 export function WbsView() {
   const { T } = useApp();
@@ -130,6 +131,24 @@ export function BoardView() {
 export function BudgetView() {
   const { p, T, lang, update } = useApp();
   const fileInput = useRef<HTMLInputElement>(null);
+  const [msg, setMsg] = useState("");
+  /** Link the file and, for a CSV, pull its numbers into the budget. */
+  const linkFile = (f: File, existing?: string) => {
+    const ext = (f.name.split(".").pop() ?? "").toUpperCase().slice(0, 4);
+    const id = existing ?? uid("F");
+    const today = new Date().toISOString().slice(0, 10);
+    const finish = (text?: string) => update((pp) => {
+      const rec = pp.files.find((x) => x.id === id);
+      if (rec) { rec.name = f.name; rec.synced = today; }
+      else pp.files.push({ id, name: f.name, ext, where: lang === "da" ? "Fra din computer" : "From your computer", synced: today, note: `${Math.max(1, Math.round(f.size / 1024))} KB` });
+      if (text !== undefined) {
+        const n = readBudgetCsv(pp, text, id, lang === "da" ? "hele filen" : "whole file");
+        setMsg(n < 0 ? T.readNone : `${T.readDone}: ${n}`);
+      }
+    });
+    if (ext === "CSV" || ext === "TXT") { const r = new FileReader(); r.onload = () => finish(String(r.result)); r.readAsText(f); } else finish();
+  };
+  const readInto = useRef<string | undefined>(undefined);
   const tot = (k: "plan" | "act" | "fc") => p.budget.reduce((a, b) => a + (b[k] || 0), 0);
   const max = Math.max(1, ...p.budget.map((b) => Math.max(b.plan, b.fc, b.act)));
   const fmt = (n: number) => n.toLocaleString(lang === "da" ? "da-DK" : "en-GB");
@@ -168,12 +187,10 @@ export function BudgetView() {
       </div>
       <div className="card">
         <div className="card-head"><h3>{T.linkedFiles}</h3>
-          <button type="button" className="btn small" onClick={() => fileInput.current?.click()}>{T.linkFile}</button>
-          <input ref={fileInput} type="file" accept=".xlsx,.xls,.csv,.ods" hidden onChange={(e) => {
-            const f = e.target.files?.[0]; if (!f) return;
-            const ext = (f.name.split(".").pop() ?? "").toUpperCase().slice(0, 4);
-            update((pp) => { pp.files.push({ id: uid("F"), name: f.name, ext, where: lang === "da" ? "Fra din computer" : "From your computer", synced: new Date().toISOString().slice(0, 10), note: `${Math.max(1, Math.round(f.size / 1024))} KB` }); });
-            e.target.value = "";
+          <button type="button" className="btn small" onClick={() => { readInto.current = undefined; fileInput.current?.click(); }}>{T.linkFile}</button>
+          <input ref={fileInput} type="file" accept=".xlsx,.xls,.csv,.ods,.txt" hidden onChange={(e) => {
+            const f = e.target.files?.[0]; if (f) linkFile(f, readInto.current);
+            readInto.current = undefined; e.target.value = "";
           }} />
         </div>
         {p.files.map((f) => (
@@ -182,12 +199,14 @@ export function BudgetView() {
             <div className="minw0"><b>{f.name}</b><div className="cat">{f.where} · {f.note} · {T.synced} {f.synced}</div>
               <div className="cat">{p.budget.filter((b) => b.fileId === f.id).map((b) => b.area).join(", ")}</div></div>
             <div className="row-gap">
-              <button type="button" className="btn ghost small" onClick={() => update((pp) => { pp.files.find((x) => x.id === f.id)!.synced = new Date().toISOString().slice(0, 10); })}>{T.refresh}</button>
+              {f.ext === "CSV" ? <button type="button" className="btn ghost small" title={T.readNumbersHint} onClick={() => { readInto.current = f.id; fileInput.current?.click(); }}>{T.readNumbers}</button>
+                : <button type="button" className="btn ghost small" onClick={() => update((pp) => { pp.files.find((x) => x.id === f.id)!.synced = new Date().toISOString().slice(0, 10); })}>{T.refresh}</button>}
               <button type="button" className="icon-x" aria-label={T.del} onClick={() => update((pp) => { pp.files = pp.files.filter((x) => x.id !== f.id); pp.budget.forEach((b) => { if (b.fileId === f.id) delete b.fileId; }); })}>×</button>
             </div>
           </div>
         ))}
-        <p className="muted small">{T.filesNote}</p>
+        {msg && <p className="small" role="status">{msg}</p>}
+        <p className="muted small">{T.filesNote} {T.readNumbersHint}</p>
       </div>
     </>
   );

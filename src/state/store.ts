@@ -44,6 +44,28 @@ interface AppStore {
    *  mutate, so components never mutate stored state by accident. */
   update: (recipe: (p: Project) => void) => void;
   replaceActive: (p: Project) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+}
+
+/** Undo history per project, kept in memory only. Edits within one second
+ *  of each other (typing in a field) collapse into one step. */
+const past = new Map<string, Project[]>();
+const future = new Map<string, Project[]>();
+let lastPush = 0;
+const HISTORY = 60;
+function remember(id: string, prev: Project) {
+  const now = Date.now();
+  const stack = past.get(id) ?? [];
+  if (now - lastPush > 1000 || !stack.length) {
+    stack.push(prev);
+    if (stack.length > HISTORY) stack.shift();
+    past.set(id, stack);
+  }
+  lastPush = now;
+  future.set(id, []);
 }
 
 const firstUi: UiState = { view: "overview", sel: {}, sMode: "list", sCur: "pi", rMode: "one", rSub: "register", rCur: "pxi" };
@@ -64,7 +86,7 @@ export const useStore = create<AppStore>()(
         set({ ui: { ...ui, ...extra, view, sel: sel ? { ...ui.sel, [view]: sel } : ui.sel, flash: sel } });
         try { history.replaceState(null, "", "#" + view); } catch { /* sandboxed frames */ }
       },
-      setActive: (id) => set({ activeId: id, ui: { ...get().ui, sel: {}, flash: undefined } }),
+      setActive: (id) => set({ activeId: id, ui: { ...get().ui, sel: {}, flash: undefined }, canUndo: !!past.get(id)?.length, canRedo: !!future.get(id)?.length }),
       addProject: (p) => {
         const { order, projects } = get();
         if (order.length >= MAX_PROJECTS) return;
@@ -92,12 +114,33 @@ export const useStore = create<AppStore>()(
         const { activeId, projects } = get();
         const draft = structuredClone(projects[activeId]);
         recipe(draft);
-        set({ projects: { ...projects, [activeId]: draft } });
+        remember(activeId, projects[activeId]);
+        set({ projects: { ...projects, [activeId]: draft }, canUndo: true, canRedo: false });
       },
       replaceActive: (p) => {
         const { activeId, projects } = get();
-        set({ projects: { ...projects, [activeId]: { ...p, id: activeId } } });
+        lastPush = 0;
+        remember(activeId, projects[activeId]);
+        set({ projects: { ...projects, [activeId]: { ...p, id: activeId } }, canUndo: true, canRedo: false });
       },
+      undo: () => {
+        const { activeId, projects } = get();
+        const prev = past.get(activeId)?.pop();
+        if (!prev) return;
+        (future.get(activeId) ?? future.set(activeId, []).get(activeId)!).push(projects[activeId]);
+        lastPush = 0;
+        set({ projects: { ...projects, [activeId]: prev }, canUndo: !!past.get(activeId)?.length, canRedo: true });
+      },
+      redo: () => {
+        const { activeId, projects } = get();
+        const next = future.get(activeId)?.pop();
+        if (!next) return;
+        (past.get(activeId) ?? past.set(activeId, []).get(activeId)!).push(projects[activeId]);
+        lastPush = 0;
+        set({ projects: { ...projects, [activeId]: next }, canUndo: true, canRedo: !!future.get(activeId)?.length });
+      },
+      canUndo: false,
+      canRedo: false,
     }),
     {
       name: STORAGE_KEY,

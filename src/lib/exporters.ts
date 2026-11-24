@@ -248,3 +248,40 @@ export async function buildDeck(p: Project, lang: Lang): Promise<Blob> {
   }
   return (await pres.write({ outputType: "blob" })) as Blob;
 }
+
+/** "1.200,50", "1,200.50", "1 200" and "-300" all become numbers. */
+export function parseNum(s: string): number {
+  let v = s.replace(/[\s ]|kr\.?|dkk|eur|€|\$/gi, "");
+  const lc = v.lastIndexOf(","), ld = v.lastIndexOf(".");
+  if (lc > -1 && ld > -1) v = lc > ld ? v.replace(/\./g, "").replace(",", ".") : v.replace(/,/g, "");
+  else if (lc > -1) v = /,\d{1,2}$/.test(v) ? v.replace(",", ".") : v.replace(/,/g, "");
+  else if (ld > -1 && /\.\d{3}($|\.)/.test(v)) v = v.replace(/\./g, "");
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Read Plan / Spent / Forecast per area from a spreadsheet exported as
+ *  CSV, and update the budget lines whose area matches (new areas are
+ *  added). Returns how many lines changed, or -1 when no columns match. */
+export function readBudgetCsv(p: Project, text: string, fileId: string, range: string): number {
+  const rows = parseCsv(text);
+  const head = (rows.shift() ?? []).map((h) => h.trim().toLowerCase());
+  const find = (re: RegExp) => head.findIndex((h) => re.test(h));
+  const ia = find(/^(area|område|omrade|post|item|category|kategori|konto|account|line)/);
+  const ip = find(/^(plan|planned|budget)/), is = find(/^(spent|actual|forbrug|faktisk)/), ifc = find(/^(forecast|prognose|estimate|skøn)/);
+  if (ia < 0 || (ip < 0 && is < 0 && ifc < 0)) return -1;
+  let n = 0;
+  for (const r of rows) {
+    const area = (r[ia] ?? "").trim();
+    if (!area || /^(total|i alt|sum)$/i.test(area)) continue;
+    let line = p.budget.find((b) => b.area.trim().toLowerCase() === area.toLowerCase());
+    if (!line) { line = { id: "BU" + Date.now().toString(36) + n, area, plan: 0, act: 0, fc: 0, links: [] }; p.budget.push(line); }
+    if (ip >= 0) line.plan = parseNum(r[ip] ?? "");
+    if (is >= 0) line.act = parseNum(r[is] ?? "");
+    if (ifc >= 0) line.fc = parseNum(r[ifc] ?? "");
+    else if (ip >= 0 && !line.fc) line.fc = line.plan;
+    line.fileId = fileId; line.range = range;
+    n++;
+  }
+  return n;
+}

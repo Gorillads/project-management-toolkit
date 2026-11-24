@@ -96,6 +96,24 @@ const en = {
   exampleNote: "Example project. All names are fictional.",
   footer: "Data stays in this browser. Export a project file to back it up or share it.",
   github: "Source on GitHub",
+  search: "Search",
+  searchPh: "Search everything… (Ctrl+K)",
+  noResults: "No matches.",
+  undo: "Undo",
+  redo: "Redo",
+  help: "How it works",
+  guideSkip: "Close", guideBack: "Back", guideNext: "Next", guideDone: "Start working",
+  guide: [
+    ["Everything is linked", "Risks link to stakeholders, issues to the risk they came from, decisions to milestones, tasks to people. Click any blue chip to jump to that item. Each item shows where else it appears, so you can follow the chain in both directions."],
+    ["Choose what to compare", "In Stakeholders and Risks, pick any two dimensions as axes: power and interest, monetary investment and direct influence, revenue and churn risk. Choose who is included, save the setup as an analysis, compare analyses side by side, and pin the useful ones to the Overview with ★."],
+    ["Mark issues with ⚑", "When a risk happens, flag it with ⚑. That opens an issue in the Issue log, linked back to the risk. Remove the flag and the issue closes but stays in the log."],
+    ["Start from a template", "The + in the tab bar starts a project from a template: ERP rollout, app launch, restructuring, office move or product launch. Each brings its phases, decision points, typical stakeholders, risks and tools. Switch tools on or off in the tool library on the Overview."],
+    ["Your data stays here", "Projects are saved in this browser only. Use Export for a PowerPoint overview, a CSV for Excel or a JSON project file. Import reads the CSV or JSON back. Ctrl+Z undoes, Ctrl+K searches."],
+  ] as [string, string][],
+  readNumbers: "Read numbers from a CSV",
+  readNumbersHint: "Columns named Area, Plan, Spent and Forecast (or Område, Plan, Forbrugt, Prognose). Lines are matched by area name; new areas are added.",
+  readDone: "Updated from file",
+  readNone: "No matching columns found. Use Area, Plan, Spent and Forecast as headings.",
 };
 type Dict = typeof en;
 
@@ -203,6 +221,24 @@ const da: Dict = {
   exampleNote: "Eksempelprojekt. Alle navne er fiktive.",
   footer: "Data bliver i denne browser. Eksportér en projektfil for at tage backup eller dele den.",
   github: "Kildekode på GitHub",
+  search: "Søg",
+  searchPh: "Søg i alt… (Ctrl+K)",
+  noResults: "Ingen resultater.",
+  undo: "Fortryd",
+  redo: "Gentag",
+  help: "Sådan virker det",
+  guideSkip: "Luk", guideBack: "Tilbage", guideNext: "Næste", guideDone: "Kom i gang",
+  guide: [
+    ["Alt hænger sammen", "Risici er linket til interessenter, problemer til den risiko de kom fra, beslutninger til milepæle og opgaver til personer. Klik på en blå chip for at gå til elementet. Hvert element viser, hvor det ellers optræder, så du kan følge kæden begge veje."],
+    ["Vælg hvad du sammenligner", "Under Interessenter og Risici kan du vælge to vilkårlige dimensioner som akser: magt og interesse, økonomisk investering og direkte indflydelse, omsætning og risiko for at miste kunden. Vælg hvem der er med, gem opsætningen som en analyse, sammenlign analyser side om side, og fastgør de nyttige til overblikket med ★."],
+    ["Markér problemer med ⚑", "Når en risiko indtræffer, markerer du den med ⚑. Så oprettes et problem i problemloggen med link tilbage til risikoen. Fjerner du markeringen, lukkes problemet, men det bliver i loggen."],
+    ["Start fra en skabelon", "+ i fanelinjen starter et projekt fra en skabelon: ERP-udrulning, app-lancering, organisationsændring, flytning eller produktlancering. Hver har sine faser, beslutningspunkter, typiske interessenter, risici og værktøjer. Slå værktøjer til og fra i værktøjskassen på overblikket."],
+    ["Dine data bliver her", "Projekter gemmes kun i denne browser. Brug Eksportér til et PowerPoint-overblik, en CSV til Excel eller en JSON-projektfil. Importér læser CSV eller JSON ind igen. Ctrl+Z fortryder, Ctrl+K søger."],
+  ],
+  readNumbers: "Læs tal fra en CSV",
+  readNumbersHint: "Kolonner med navnene Område, Plan, Forbrugt og Prognose (eller Area, Plan, Spent, Forecast). Linjer matches på områdets navn; nye områder tilføjes.",
+  readDone: "Opdateret fra fil",
+  readNone: "Ingen genkendte kolonner. Brug Område, Plan, Forbrugt og Prognose som overskrifter.",
 };
 
 export const DICTS: Record<Lang, Dict> = { en, da };

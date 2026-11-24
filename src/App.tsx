@@ -7,6 +7,8 @@ import { TEMPLATES } from "./data/templates";
 import { exampleProject } from "./data/projects";
 import { buildDeck, downloadBlob, importCsv, parseProjectJson, projectCsv, projectJson } from "./lib/exporters";
 import { slug } from "./views/Planning";
+import { Search } from "./components/Search";
+import { Guide } from "./components/Guide";
 import { OverviewView, TemplatesView, CharterView, SwotView } from "./views/ProjectViews";
 import { StakeholdersView } from "./views/Stakeholders";
 import { RisksView } from "./views/Risks";
@@ -22,7 +24,7 @@ const VIEWS: Record<string, () => ReactNode> = {
 };
 const REPO = "https://github.com/Gorillads/project-management-toolkit";
 
-function TabBar() {
+function TabBar({ onHelp }: { onHelp: () => void }) {
   const { lang, projects, order, activeId, setActive, close, duplicate, newFromTemplate, addProject } = useStore();
   const T = t(lang);
   const [open, setOpen] = useState(false);
@@ -38,6 +40,7 @@ function TabBar() {
         ))}
       </div>
       <div className="tab-actions">
+        <button type="button" className="icon-btn" title={T.help} aria-label={T.help} onClick={onHelp}>?</button>
         <button type="button" className="icon-btn" title={T.duplicate} aria-label={T.duplicate} disabled={full} onClick={duplicate}>⧉</button>
         <div className="menu">
           <button type="button" className="icon-btn" title={T.newProject} aria-label={T.newProject} aria-expanded={open} disabled={full} onClick={() => setOpen(!open)}>+</button>
@@ -106,6 +109,20 @@ export default function App() {
   const go = useStore((s) => s.go);
   const p = useProject();
   const T = t(lang);
+  const { undo, redo, canUndo, canRedo } = useStore();
+  const [guide, setGuide] = useState(() => { try { return !localStorage.getItem("pmt-guide-seen"); } catch { return false; } });
+  const closeGuide = () => { setGuide(false); try { localStorage.setItem("pmt-guide-seen", "1"); } catch { /* private mode */ } };
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement;
+      if (el.closest("input, textarea, select, [contenteditable]")) return; // keep the field's own undo
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z" && e.key.toLowerCase() !== "y") return;
+      e.preventDefault();
+      if (e.key.toLowerCase() === "y" || e.shiftKey) redo(); else undo();
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [undo, redo]);
   useEffect(() => { document.documentElement.lang = lang; document.title = T.appName; }, [lang, T.appName]);
   useEffect(() => {
     const read = () => { const v = location.hash.slice(1); if (v && VIEWS[v] && v !== useStore.getState().ui.view) go(v); };
@@ -119,10 +136,16 @@ export default function App() {
   let g = "";
   return (
     <div className="app">
-      <TabBar />
+      <TabBar onHelp={() => setGuide(true)} />
+      <Guide open={guide} onClose={closeGuide} />
       <header className="app-header">
         <div><h1>{T.appName}</h1><div className="sub">{T.tagline}</div></div>
         <div className="header-controls">
+          <Search />
+          <div className="seg" role="group" aria-label={T.undo}>
+            <button type="button" title={`${T.undo} (Ctrl+Z)`} aria-label={T.undo} disabled={!canUndo} onClick={undo}>↶</button>
+            <button type="button" title={`${T.redo} (Ctrl+Shift+Z)`} aria-label={T.redo} disabled={!canRedo} onClick={redo}>↷</button>
+          </div>
           <div className="seg" role="group" aria-label="Language">
             {(["da", "en"] as const).map((l) => <button key={l} type="button" className={lang === l ? "active" : ""} onClick={() => setLang(l)}>{l.toUpperCase()}</button>)}
           </div>
