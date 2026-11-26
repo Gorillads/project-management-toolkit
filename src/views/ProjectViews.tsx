@@ -25,7 +25,6 @@ export function useSummaries() {
   const tpl = tplById(p.templateId);
   const fmt = (n: number) => n.toLocaleString(lang === "da" ? "da-DK" : "en-GB");
   const da = lang === "da";
-  const decidedTpl = p.decisions.filter((d) => d.tpl).length;
   const gaps = p.stakeholders.filter((s) => (s.engDesired ?? 3) > (s.engCurrent ?? 2)).length;
   const s: Record<string, [string, string]> = {
     templates: [tpl.name[lang], `${da ? "Fase" : "Phase"} ${p.phase + 1}/${tpl.phases.length}: ${tpl.phases[p.phase]?.[0][lang] ?? ""}`],
@@ -33,7 +32,7 @@ export function useSummaries() {
     stakeholders: [`${p.stakeholders.length} ${T.stakeholdersWord.toLowerCase()}`, `${p.stakeholders.filter((x) => x.type === "Internal").length} ${T.internal.toLowerCase()}, ${p.stakeholders.filter((x) => x.type === "External").length} ${T.external.toLowerCase()} · ${p.analyses.length} ${T.analysis.toLowerCase()}`],
     risks: [`${p.risks.length} ${T.tools.risks.toLowerCase()}, ${high} ${T.statHigh}`, `${p.risks.filter((r) => openIssueOf(p, r.id)).length} ⚑ · ${p.assumptions.length} ${T.assumptions.toLowerCase()}`],
     issues: [`${open.length} ${da ? "åbne" : "open"}`, `${open.filter((i) => i.prio === "High").length} ${T.high.toLowerCase()}`],
-    decisions: [`${p.decisions.filter((d) => d.status === "Open").length} ${da ? "åbne" : "open"} · ${p.decisions.filter((d) => d.status !== "Open").length} ${da ? "besluttet" : "decided"}`, `${Math.max(0, tpl.decisions.length - decidedTpl)} ${da ? "typiske forude" : "typical still ahead"}`],
+    decisions: [`${p.decisions.filter((d) => d.status === "Open").length} ${da ? "skal besluttes" : "to decide"}`, `${p.decisions.filter((d) => d.status !== "Open").length} ${da ? "besluttet" : "decided"}`],
     changes: [`${p.changes.length}`, `${p.changes.filter((c) => c.status === "Under review").length} ${tv(lang, "Under review").toLowerCase()}`],
     wbs: [`${p.wbs.length} ${da ? "arbejdspakker" : "work packages"}`, `${p.wbs.length ? Math.round(p.wbs.reduce((a, w) => a + (w.progress ?? 0), 0) / p.wbs.length) : 0}% ${da ? "i snit" : "on average"}`],
     schedule: [next ? next.title : T.empty, next ? `${da ? "om" : "in"} ${days} ${da ? "dage" : "days"} · ${p.milestones.filter((m) => m.done).length}/${p.milestones.length}` : ""],

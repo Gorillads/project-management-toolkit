@@ -35,6 +35,19 @@ who is included (by group or individually), and which two dimensions to
 compare (or add your own). The result is the grid and a score table where
 scores can be changed. Compare shows every analysis side by side.
 
+The **Decision log** add-on lists what is still **to decide** (each with who
+decides, a person or a group such as the steering committee, and a
+decide-by date; overdue ones are flagged) and a timeline of what has been
+**decided**. Each decision records the question, the options considered with
+a short for and against and what each would cost on price, time and
+resources, the chosen option and why, and what it affects (risks, success
+criteria, deliverables, actors). Choosing an option marks the decision as
+made. Risks, success criteria and deliverables have a **Raise a decision**
+button that creates a linked open decision. When the add-on is on, the
+Overview checklist asks that every open decision has someone who decides
+and a date. In the CSV the options are summarised; the project file keeps
+them in full.
+
 ## Arrange each tab
 
 Every core tab (Overview, Purpose & success, Actors, Risks) is made of

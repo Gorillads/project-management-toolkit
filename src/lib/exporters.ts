@@ -35,7 +35,7 @@ const CSV_MAP: Record<string, Partial<Record<Col, string>>> = {
   people: { Category: "group", Type: "role", Owner: "stakeholder", Status: "org", Text: "resp", Date: "email" },
   risks: { Category: "cat", Status: "status", Text: "mit", Cause: "cause", Consequence: "consequence" },
   issues: { Category: "prio", Type: "from", Owner: "owner", Status: "status" },
-  decisions: { Category: "tpl", Owner: "by", Date: "date" },
+  decisions: { Category: "forum", Owner: "by", Date: "date", Status: "status", Type: "due", Text: "why" },
   assumptions: { Type: "kind", Status: "status" },
   changes: { Owner: "by", Status: "status", Number: "cost", Type: "weeks" },
   milestones: { Date: "date", Status: "done" },
@@ -129,6 +129,7 @@ export function importCsv(p: Project, text: string): { registers: string[]; rows
       }
       if (c === "stakeholders") { it.type = it.type === "Internal" ? "Internal" : "External"; it.cat ??= ""; it.org ??= ""; it.need ??= ""; }
       if (c === "risks") { Object.assign(it, parseOwners(get(r, "Owner"))); if (!it.owner) delete it.owner; it.cat ??= ""; it.status ??= "Open"; it.mit ??= ""; }
+      if (c === "decisions") { it.options ??= []; it.status = it.status === "Open" ? "Open" : "Decided"; it.date ??= ""; }
       if (c === "criteria") { it.target ??= ""; it.status ??= "Draft"; }
       if (c === "deliverables") it.status ??= "Draft";
       if (c === "tasks") it.col = ["todo", "doing", "done"].includes(it.col as string) ? it.col : "todo";
@@ -244,7 +245,7 @@ export async function buildDeck(p: Project, lang: Lang): Promise<Blob> {
   // @ts-expect-error see above
   s.addTable(it, { ...tbl, x: 0.5, y: 1.5, w: 6.1, colW: [0.5, 3.6, 0.7, 1.3] });
   const dt: unknown[][] = [[th(T.id), th(T.title), th(T.date), th(T.decidedBy)]];
-  p.decisions.forEach((x) => dt.push([x.id, x.title, x.date, titleOf(p, x.by)]));
+  p.decisions.forEach((x) => dt.push([x.id, x.title + ((o) => (o ? ` → ${o}` : ""))(x.options.find((o) => o.id === x.chosen)?.text), x.status === "Open" ? `${tv(lang, "Open")}${x.due ? " · " + x.due : ""}` : x.date, x.by ? titleOf(p, x.by) : x.forum ? tv(lang, x.forum) : ""]));
   // @ts-expect-error see above
   s.addTable(dt, { ...tbl, x: 6.8, y: 1.5, w: 6, colW: [0.5, 3.2, 1.1, 1.2] });
 

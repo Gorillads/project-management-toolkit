@@ -174,11 +174,27 @@ export function exampleProject(): Project {
       { id: "I4", title: "Vendor invoices 12 extra configuration days", prio: "Medium", status: "Escalated", owner: "P1", from: "R5", links: ["S14", "D3"] },
     ],
     decisions: [
-      { id: "D1", title: "Big bang or phased go-live?", status: "Decided", choice: "Phased go-live: finance first, warehouse 4 weeks later", why: "Spreads the load on key users and keeps invoicing running if the warehouse slips. Big bang was cheaper but put month-end close at risk.", date: "2026-10-02", by: "P9", links: ["R3", "R6", "M5"], tpl: "Big bang or phased go-live" },
-      { id: "D2", title: "Which integrations go live on day one?", status: "Decided", choice: "Keep the webshop on CSV export until Q3", why: "The webshop API is undocumented; a CSV bridge removes it from the critical path.", date: "2026-10-21", by: "P2", links: ["R8", "S12"], tpl: "Which integrations go live on day one" },
-      { id: "D3", title: "Pay for 12 extra vendor days?", status: "Decided", choice: "Approved from contingency", why: "Cheaper than slipping configuration complete.", date: "2026-11-12", by: "P9", links: ["R5", "C2"] },
-      { id: "D4", title: "When to involve the works council?", status: "Decided", choice: "Brief them before the scanner rollout", why: "Scanner logging touches employee monitoring rules.", date: "2026-11-18", by: "P10", links: ["R7", "S16"] },
-      { id: "D5", title: "Which data to migrate or archive?", status: "Open", date: "", links: ["R4", "SC2"], tpl: "Which data to migrate or archive" },
+      { id: "D1", title: "Big bang or phased go-live?", status: "Decided", date: "2026-10-02", by: "P9", links: ["R3", "R6", "M5"],
+        options: [
+          { id: "o1", text: "Big bang: everything goes live on one weekend", pro: "One cut-over, no temporary interfaces", con: "Month-end close and warehouse change at the same time", tri: { fin: 0, sched: 0, res: 3 } },
+          { id: "o2", text: "Phased: finance first, warehouse 4 weeks later", pro: "Spreads the load on key users; invoicing keeps running if the warehouse slips", con: "Four weeks of temporary interfaces", tri: { fin: 1, sched: 1, res: 1 } },
+        ], chosen: "o2", why: "Key users cannot carry both changes in the same month. The extra interface work is cheaper than a failed close." },
+      { id: "D2", title: "Which integrations go live on day one?", status: "Decided", date: "2026-10-21", by: "P2", links: ["R8", "S12"],
+        options: [
+          { id: "o1", text: "Full webshop API integration from day one", pro: "No manual steps", con: "The webshop API is undocumented", tri: { fin: 1, sched: 3, res: 2 } },
+          { id: "o2", text: "Keep the webshop on CSV export until Q3", pro: "Removes the webshop from the critical path", con: "Orders arrive in batches", tri: { fin: 0, sched: 0, res: 1 } },
+        ], chosen: "o2", why: "Takes the riskiest integration off the critical path." },
+      { id: "D3", title: "Pay for 12 extra vendor days?", status: "Decided", date: "2026-11-12", by: "P9", links: ["R5", "C2"],
+        options: [{ id: "o1", text: "Yes, from contingency", pro: "Keeps configuration on time", con: "Uses a third of the contingency", tri: { fin: 2, sched: 0, res: 0 } }, { id: "o2", text: "No, cut scope instead", pro: "Budget untouched", con: "Finance loses two reports", tri: { fin: 0, sched: 0, res: 1 } }],
+        chosen: "o1", why: "Cheaper than slipping configuration complete." },
+      { id: "D4", title: "When to involve the works council?", status: "Decided", date: "2026-11-18", by: "P10", links: ["R7", "S16"],
+        options: [{ id: "o1", text: "Brief them before the scanner rollout", pro: "No surprises on monitoring rules", con: "", tri: { fin: 0, sched: 1, res: 0 } }], chosen: "o1", why: "Scanner logging touches employee monitoring rules." },
+      { id: "D5", title: "Which data do we migrate, and what do we archive?", status: "Open", date: "", forum: "Steering committee", due: "2026-12-15", links: ["R4", "SC2", "DL2"],
+        options: [
+          { id: "o1", text: "Migrate all open items plus two years of history", pro: "Users find old orders in the new system", con: "Two more dry runs", tri: { fin: 1, sched: 2, res: 2 } },
+          { id: "o2", text: "Migrate open items only; archive the rest read-only", pro: "Smaller, cleaner migration", con: "Two systems to look in for a while", tri: { fin: 1, sched: 0, res: 1 } },
+        ] },
+      { id: "D6", title: "Buy or lease the warehouse scanners?", status: "Open", date: "", by: "P7", due: "2027-01-10", links: ["DL3", "R13"], options: [] },
     ],
     assumptions: [
       { id: "A1", kind: "Assumption", title: "Vendor keeps the same consultant team", status: "Unverified", links: ["R1", "S14"] },

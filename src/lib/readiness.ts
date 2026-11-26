@@ -27,6 +27,8 @@ export function readiness(p: Project): Step[] {
   const owned = p.risks.filter((r) => r.owners.length > 0 && r.mit.trim());
   const caused = p.risks.filter((r) => (r.cause ?? "").trim() && Math.max(r.sc.fin ?? 0, r.sc.sched ?? 0, r.sc.res ?? 0) > 0);
   const linked = p.risks.filter((r) => r.links.some((id) => ["S", "P", "DL"].includes(kindOf(p, id))));
+  const open = p.decisions.filter((d) => d.status === "Open");
+  const ready = open.filter((d) => (d.by || d.forum) && d.due);
   const agreed = [...p.criteria, ...p.deliverables].filter((x) => x.status === "Agreed");
   const first = <T extends { id: string }>(all: T[], ok: T[]) => all.find((x) => !ok.includes(x))?.id;
   const every = <T extends { id: string }>(key: string, all: T[], ok: T[], view: string) =>
@@ -43,6 +45,7 @@ export function readiness(p: Project): Step[] {
     every("riskCause", p.risks, caused, "risks"),
     every("riskOwned", p.risks, owned, "risks"),
     every("riskLinked", p.risks, linked, "risks"),
+    ...(p.enabled.includes("decisions") ? [{ key: "decisions", done: ready.length === open.length, have: ready.length, of: open.length, view: "decisions", sel: first(open, ready) }] : []),
     { key: "agreed", done: agreed.length > 0 && agreed.length === p.criteria.length + p.deliverables.length, have: agreed.length, of: p.criteria.length + p.deliverables.length, view: "purpose",
       sel: [...p.criteria, ...p.deliverables].find((x) => x.status !== "Agreed")?.id },
   ];

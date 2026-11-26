@@ -5,6 +5,7 @@ import { tv, type Dict } from "../i18n";
 import { CRITERION_STATUSES, DELIVERABLE_STATUSES } from "../data/catalog";
 import { AddRow, ItemEditor, ViewHead, useApp, type Field } from "../components/ui";
 import { placeItem, shiftItem, tidy, type Place } from "../lib/structure";
+import { RaiseDecision } from "./Decisions";
 import { opts } from "./Registers";
 
 type Item = { id: string; parent?: string };
@@ -297,6 +298,7 @@ export function PurposeView() {
         <div><span className="id">{selCrit.id} · {U.criteria}</span><h4>{selCrit.title || "…"}</h4></div>
         {chainBox}
         {position("criteria", selCrit)}
+        <RaiseDecision id={selCrit.id} />
         <ItemEditor coll="criteria" item={selCrit} fields={fields} />
       </div>
     );
@@ -316,6 +318,7 @@ export function PurposeView() {
         {chainBox}
         <Serves id={selDel.id} coll="deliverables" serves={selDel.serves} label={U.servesCriteria} options={p.criteria.map((c) => ({ id: c.id, title: c.title }))} />
         {position("deliverables", selDel)}
+        <RaiseDecision id={selDel.id} />
         <ItemEditor coll="deliverables" item={selDel} fields={fields} />
       </div>
     );

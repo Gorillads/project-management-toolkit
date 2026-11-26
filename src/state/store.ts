@@ -120,7 +120,16 @@ export function repairProject(p: Project): Project {
   for (const r of p.risks) { r.sc ??= {}; r.sc.res ??= 0; r.sc.fin ??= 0; r.sc.sched ??= 0; if (typeof r.cause !== "string") r.cause = ""; if (typeof r.consequence !== "string") r.consequence = ""; syncOwners(r); }
   flattenGoals(p);
   syncImpact(p);
-  for (const d of p.decisions) { if (d.status !== "Open" && d.status !== "Decided") d.status = "Decided"; if (typeof d.date !== "string") d.date = ""; }
+  for (const d of p.decisions) {
+    if (d.status !== "Open" && d.status !== "Decided") d.status = "Decided";
+    if (typeof d.date !== "string") d.date = "";
+    if (!Array.isArray(d.options)) d.options = [];
+    for (const o of d.options) { o.text ??= ""; o.pro ??= ""; o.con ??= ""; o.tri ??= { fin: 0, sched: 0, res: 0 }; }
+    // An older free-text answer becomes the chosen option.
+    if (d.choice?.trim() && !d.options.length) { d.options.push({ id: "o1", text: d.choice.trim(), pro: "", con: "", tri: { fin: 0, sched: 0, res: 0 } }); d.chosen = "o1"; }
+    delete d.choice;
+    if (d.chosen && !d.options.some((o) => o.id === d.chosen)) delete d.chosen;
+  }
   syncCats(p);
   return p;
 }

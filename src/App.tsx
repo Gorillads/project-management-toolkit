@@ -13,7 +13,8 @@ import { StakeholdersView } from "./views/Stakeholders";
 import { RisksView } from "./views/Risks";
 import { ActorsView, RisksCoreView } from "./views/Core";
 import { PurposeView } from "./views/Purpose";
-import { IssuesView, DecisionsView, ChangesView, BenefitsView, LessonsView } from "./views/Registers";
+import { IssuesView, ChangesView, BenefitsView, LessonsView } from "./views/Registers";
+import { DecisionsView } from "./views/Decisions";
 import { WbsView, ScheduleView, BoardView, BudgetView } from "./views/Planning";
 import { PeopleView, RaciView, EngagementView, CommsView } from "./views/PeopleViews";
 

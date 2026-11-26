@@ -9,6 +9,7 @@ import { looksLikeConsequence } from "../lib/riskText";
 import { groupOpts, opts } from "./Registers";
 import { CategoryEditor } from "../components/CategoryEditor";
 import { Board } from "../components/Board";
+import { RaiseDecision } from "./Decisions";
 
 /** The core charts always cover every stakeholder and every risk. */
 export const coreAnalysis = (p: Project, T: Dict): Analysis => ({
@@ -313,6 +314,7 @@ export function RisksCoreView() {
                   <Sev s={pScore(sel)} />
                 </div>
                 {p.enabled.length > 4 && <><div className="sub-h">{T.alsoIn}</div><Backlinks id={sel.id} skip={["S", "P"]} /></>}
+                <RaiseDecision id={sel.id} />
                 <ItemEditor coll="risks" item={sel} fields={fields} />
               </div>
             ) : <div className="empty">{T.selectHint}</div>}

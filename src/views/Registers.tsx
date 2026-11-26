@@ -1,8 +1,6 @@
-import type { Benefit, Change, Decision, Issue, Lesson } from "../model/types";
+import type { Benefit, Change, Issue, Lesson } from "../model/types";
 import { tv } from "../i18n";
-import { CHANGE_STATUSES, DECISION_STATUSES, ISSUE_STATUSES, PRIORITIES } from "../data/catalog";
-import { nextId } from "../lib/links";
-import { Board } from "../components/Board";
+import { CHANGE_STATUSES, ISSUE_STATUSES, PRIORITIES } from "../data/catalog";
 import { tplById } from "../data/templates";
 import { Register } from "../components/Register";
 import { Chip, LinkIcon, Status, ViewHead, useApp, type Field } from "../components/ui";
@@ -52,77 +50,6 @@ export function PhaseFlow({ templateId, phase, onPick }: { templateId: string; p
         </button>
       ))}
     </div>
-  );
-}
-
-export function DecisionsView() {
-  const { p, lang, T, go, ui, setUi, update } = useApp();
-  const D = T.dec;
-  const tpl = tplById(p.templateId);
-  const typical = tpl.decisions.map((d) => d[lang]);
-  const matches = (x: Decision, d: string) => !!x.tpl && tpl.decisions.some((td) => (td.en === x.tpl || td.da === x.tpl) && (td.en === d || td.da === d));
-  const fields: Field[] = [
-    { k: "title", label: D.question, type: "text" },
-    { k: "status", label: T.status, type: "select", options: opts(DECISION_STATUSES, lang) },
-    { k: "choice", label: D.choice, type: "textarea" },
-    { k: "why", label: D.why, type: "textarea" },
-    { k: "by", label: T.decidedBy, type: "ref", only: ["people", "stakeholders"] },
-    { k: "date", label: T.date, type: "date" },
-    { k: "tpl", label: T.typicalDecision, type: "select", options: [{ v: "", l: "–" }, ...typical.map((d) => ({ v: d, l: d }))] },
-    { k: "notes", label: T.notes, type: "textarea" },
-    { k: "links", label: `${T.links} (${D.linksHint})`, type: "links" },
-  ];
-  /** Put a typical decision on the log as an open question and select it. */
-  const logTypical = (d: string) => {
-    const id = nextId(p, "decisions");
-    update((pp) => { pp.decisions.push({ id, title: d.endsWith("?") ? d : d + "?", status: "Open", date: "", tpl: d, links: [] }); });
-    setUi({ sel: { ...ui.sel, decisions: id }, flash: undefined });
-  };
-  const open = p.decisions.filter((x) => x.status === "Open");
-  const sorted = [...open, ...p.decisions.filter((x) => x.status !== "Open").sort((a, b) => (b.date || "").localeCompare(a.date || ""))];
-  return (
-    <>
-      <ViewHead id="decisions" />
-      <Board view="decisions" split="3:2" panels={[
-        { id: "how", title: D.howTitle, col: "F", node: (
-          <details className="card dec-how" open={p.decisions.length === 0}>
-            <summary><b>{D.howTitle}</b></summary>
-            <ol className="dec-steps">{D.how.map((x) => <li key={x}>{x}</li>)}</ol>
-          </details>
-        ) },
-        { id: "typical", title: D.typicalTitle, col: "F", node: (
-          <div className="card">
-            <div className="card-head"><div><h3 className="m0">{T.typicalFor}: {tpl.name[lang]}</h3><p className="muted small m0">{D.typicalHint}</p></div>
-              <button type="button" className="link-chip solo" onClick={() => go("templates")}><LinkIcon />{T.changeTemplate}</button></div>
-            <PhaseFlow templateId={p.templateId} phase={p.phase} onPick={(i) => update((pp) => { pp.phase = i; })} />
-            <p className="muted small">{D.phaseHint(tpl.phases[p.phase]?.[0][lang] ?? "")}</p>
-            <table className="mt"><tbody>
-              {typical.map((d) => {
-                const done = p.decisions.find((x) => matches(x, d));
-                return (
-                  <tr key={d}>
-                    <td>{d}</td>
-                    <td className="nowrap right">{done
-                      ? <><Status v={done.status ?? "Decided"} /> <Chip id={done.id} /></>
-                      : <button type="button" className="btn ghost small" onClick={() => logTypical(d)}>+ {D.putOnLog}</button>}</td>
-                  </tr>
-                );
-              })}
-            </tbody></table>
-          </div>
-        ) },
-        { id: "log", title: T.tools.decisions, col: "F", node: (
-          <Register<Decision> coll="decisions" items={sorted} fields={fields} hideLinksCol
-            make={(id) => ({ id, title: "", status: "Open", date: "", links: [] })}
-            cols={[
-              { h: D.decision, r: (x) => <><b>{x.title || "…"}</b>{x.choice && <div className="cat">→ {x.choice}</div>}</> },
-              { h: T.status, r: (x) => <Status v={x.status ?? "Decided"} /> },
-              { h: T.date, r: (x) => <span className="num">{x.date}</span> },
-              { h: T.decidedBy, r: (x) => x.by && <Chip id={x.by} /> },
-            ]} />
-        ) },
-      ]} />
-    </>
   );
 }
 

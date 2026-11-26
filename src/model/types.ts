@@ -55,16 +55,25 @@ export interface Issue extends BaseItem {
   auto?: boolean;
   prevStatus?: string;
 }
-/** A decision the project needs or has made. While it is Open the title
- *  is the question; once Decided, `choice` says what was chosen and `why`
- *  the reasons (options considered, trade-offs). */
+/** One option considered for a decision, with what it would cost on each
+ *  side of the project triangle (0 none to 3 a lot; price, time, resources). */
+export interface DecisionOption { id: string; text: string; pro: string; con: string; tri: { fin: number; sched: number; res: number } }
+/** A decision the project needs or has made. The title is the question.
+ *  While Open, `by` (a person) or `forum` (a group) decides by `due`. Once
+ *  Decided, `chosen` names the option taken, `why` the reasons and `date`
+ *  when. What it affects (risks, criteria, deliverables, actors) is in `links`. */
 export interface Decision extends BaseItem {
+  status: "Open" | "Decided";
   date: string;
   by?: string;
-  tpl?: string;
-  status?: string;
-  choice?: string;
+  forum?: string;
+  due?: string;
+  options: DecisionOption[];
+  chosen?: string;
   why?: string;
+  /** Older data: a free-text answer, turned into an option on load. */
+  choice?: string;
+  tpl?: string;
 }
 export interface Assumption extends BaseItem {
   kind: string;
