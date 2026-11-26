@@ -6,6 +6,7 @@ import { CRITERION_STATUSES, DELIVERABLE_STATUSES } from "../data/catalog";
 import { AddRow, ItemEditor, ViewHead, useApp, type Field } from "../components/ui";
 import { placeItem, shiftItem, tidy, type Place } from "../lib/structure";
 import { RaiseDecision } from "./Decisions";
+import { ownerNames } from "../lib/links";
 import { opts } from "./Registers";
 
 type Item = { id: string; parent?: string };
@@ -204,7 +205,6 @@ export function PurposeView() {
   const ref = (id: string) => (el: HTMLElement | null) => { if (el) els.current.set(id, el); else els.current.delete(id); };
   const nodeCls = (id: string, shape: string, depth: number) => `pu-node ${shape}` + (depth ? " sub" : "") + (sel === id ? " selected" : "") + (isLit(id) ? "" : " dim") + (gapIds.has(id) ? " gap" : "")
     + (drag === id ? " dragging" : "") + (hint?.id === id ? " drop-" + hint.zone : "");
-  const person = (id?: string) => (id ? p.people.find((x) => x.id === id)?.title : "");
 
   const node = (kind: "goal" | "crit" | "del", it: Goal | Criterion | Deliverable, depth: number) => {
     const purpose = kind === "goal" && isPurpose(it as Goal);
@@ -214,7 +214,7 @@ export function PurposeView() {
         <span className={purpose ? "pu-kind" : "id"}>{purpose ? `${U.purpose} · ${it.id}` : it.id}</span>
         <span className="pu-t">{it.title || "…"}</span>
         {kind === "crit" && (it as Criterion).target && <span className="pu-meta">{(it as Criterion).target}</span>}
-        {kind === "del" && <span className="pu-meta">{[person((it as Deliverable).owner), (it as Deliverable).due].filter(Boolean).join(" · ")}</span>}
+        {kind === "del" && <span className="pu-meta">{[ownerNames(p, it as Deliverable, (v) => tv(lang, v)), (it as Deliverable).due].filter(Boolean).join(" · ")}</span>}
         {kind !== "goal" && <span className={"pu-status s-" + (it as Criterion).status.replace(/\s+/g, "-").toLowerCase()}>{tv(lang, (it as Criterion).status)}</span>}
       </div>
     );
@@ -288,7 +288,7 @@ export function PurposeView() {
       { k: "title", label: T.title, type: "text" },
       { k: "target", label: U.target, type: "text" },
       { k: "status", label: T.status, type: "select", options: opts(CRITERION_STATUSES, lang) },
-      { k: "owner", label: T.owner, type: "ref", only: ["people"] },
+      { k: "owners", label: T.owners, type: "owners" },
       { k: "parent", label: U.parentCriterion, type: "ref", only: ["criteria"] },
       { k: "notes", label: T.notes, type: "textarea" },
       { k: "links", label: T.links, type: "links" },
@@ -305,7 +305,7 @@ export function PurposeView() {
   } else if (selDel) {
     const fields: Field[] = [
       { k: "title", label: T.title, type: "text" },
-      { k: "owner", label: T.owner, type: "ref", only: ["people"] },
+      { k: "owners", label: T.owners, type: "owners" },
       { k: "due", label: U.due, type: "date" },
       { k: "status", label: T.status, type: "select", options: opts(DELIVERABLE_STATUSES, lang) },
       { k: "parent", label: U.parentDeliverable, type: "ref", only: ["deliverables"] },
@@ -347,9 +347,9 @@ export function PurposeView() {
       { id: "add", title: T.layout.p.add, col: "F", node: <div className="card add-card">
         {!purpose && <AddRow coll="goals" label={U.addPurpose} namePh={U.purposePh} onAdd={(id, t) => { update((d) => { d.goals = [{ id, title: t, links: [] }]; }); select(id); }} />}
         <AddRow coll="criteria" label={critLabel} namePh={U.criterionPh}
-          onAdd={(id, t) => { update((d) => { d.criteria.push({ id, title: t, target: "", status: "Draft", serves: [], links: [], ...(critParent ? { parent: critParent } : {}) }); }); select(id); }} />
+          onAdd={(id, t) => { update((d) => { d.criteria.push({ id, title: t, target: "", status: "Draft", serves: [], owners: [], links: [], ...(critParent ? { parent: critParent } : {}) }); }); select(id); }} />
         <AddRow coll="deliverables" label={delLabel} namePh={U.deliverablePh}
-          onAdd={(id, t) => { update((d) => { d.deliverables.push({ id, title: t, status: "Draft", serves: !delParent && delFor ? [delFor] : [], links: [], ...(delParent ? { parent: delParent } : {}) }); }); select(id); }} />
+          onAdd={(id, t) => { update((d) => { d.deliverables.push({ id, title: t, status: "Draft", serves: !delParent && delFor ? [delFor] : [], owners: [], links: [], ...(delParent ? { parent: delParent } : {}) }); }); select(id); }} />
       </div> },
       { id: "diagram", title: T.layout.p.diagram, col: "F", node: <div className="card pu-card">
         <div className="card-head pu-head">

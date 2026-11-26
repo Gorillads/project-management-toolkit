@@ -1,4 +1,5 @@
 import type { Project } from "../model/types";
+import { OWNED, groupRef, type Owned } from "./links";
 
 /** The three user-editable category lists, and which field on which items
  *  holds the value. "" means "no group". */
@@ -26,6 +27,7 @@ export function renameCat(p: Project, kind: CatKind, from: string, to: string): 
   itemsOf(p, kind).forEach((x) => { if (x[f] === from) x[f] = n; });
   if (kind === "rCats") p.lenses.forEach((l) => { l.cats = l.cats.map((c) => (c === from ? n : c)); });
   if (kind === "sCats") p.lenses.forEach((l) => { if (l.sCat === from) l.sCat = n; });
+  if (kind !== "rCats") swapGroup(p, from, n);
   return true;
 }
 
@@ -36,6 +38,18 @@ export function removeCat(p: Project, kind: CatKind, name: string) {
   itemsOf(p, kind).forEach((x) => { if (x[f] === name) x[f] = ""; });
   if (kind === "rCats") p.lenses.forEach((l) => { if (l.cats.includes(name)) l.cats = [...l.cats.filter((c) => c !== name), ...(l.cats.includes("") ? [] : [""])]; });
   if (kind === "sCats") p.lenses.forEach((l) => { if (l.sCat === name) l.sCat = ""; });
+  if (kind !== "rCats" && !p.pGroups.includes(name) && !p.sCats.includes(name)) swapGroup(p, name, "");
+}
+
+/** Follow a renamed (or removed, to = "") group in everything it owns. */
+function swapGroup(p: Project, from: string, to: string) {
+  const a = groupRef(from), b = to ? groupRef(to) : "";
+  for (const c of OWNED) for (const it of p[c] as unknown as Owned[]) {
+    it.owners = it.owners.flatMap((x) => (x === a ? (b ? [b] : []) : [x]));
+    if (it.owner === a) { if (b) it.owner = b; else delete it.owner; }
+  }
+  p.raciPeople = p.raciPeople.flatMap((x) => (x === a ? (b ? [b] : []) : [x]));
+  for (const r of p.raci) if (a in r.a) { if (b) r.a[b] = r.a[a]; delete r.a[a]; }
 }
 
 export function moveCat(p: Project, kind: CatKind, name: string, dir: -1 | 1) {

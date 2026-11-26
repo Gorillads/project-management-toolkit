@@ -2,13 +2,11 @@ import type { Decision, DecisionOption, Project } from "../model/types";
 import { tv } from "../i18n";
 import { TRIANGLE } from "../data/catalog";
 import { tplById } from "../data/templates";
-import { deleteItem, kindOf, nextId, titleOf } from "../lib/links";
-import { AddRow, Chip, IdField, LinkEditor, ViewHead, useApp } from "../components/ui";
+import { deleteItem, kindOf, nextId, ownerNames, titleOf } from "../lib/links";
+import { AddRow, Chip, IdField, LinkEditor, OwnerChips, OwnersEditor, ViewHead, useApp } from "../components/ui";
 import { Board } from "../components/Board";
 
 const today = () => new Date().toISOString().slice(0, 10);
-/** Who decides: a person or stakeholder (`by`) or a group (`forum`). */
-const deciderOf = (d: Decision) => d.by ?? (d.forum ? "group:" + d.forum : "");
 const isLate = (d: Decision) => d.status === "Open" && !!d.due && d.due < today();
 export const openDecisions = (p: Project) => p.decisions.filter((d) => d.status === "Open");
 
@@ -21,7 +19,7 @@ export function RaiseDecision({ id }: { id: string }) {
   const raise = () => {
     const nid = nextId(p, "decisions");
     update((d) => {
-      d.decisions.push({ id: nid, title: "", status: "Open", date: "", options: [], links: [id] });
+      d.decisions.push({ id: nid, title: "", status: "Open", date: "", options: [], owners: [], links: [id] });
       if (!d.enabled.includes("decisions")) d.enabled.push("decisions");
     });
     go("decisions", nid);
@@ -35,29 +33,9 @@ export function RaiseDecision({ id }: { id: string }) {
   );
 }
 
-function DeciderSelect({ d, id }: { d: Decision; id: string }) {
-  const { p, lang, T, update } = useApp();
-  const groups = [...new Set([...p.pGroups, ...p.sCats].filter(Boolean))];
-  return (
-    <select id={id} className="sel" value={deciderOf(d)} onChange={(e) => update((pp) => {
-      const x = pp.decisions.find((y) => y.id === d.id);
-      if (!x) return;
-      const v = e.target.value;
-      delete x.by; delete x.forum;
-      if (v.startsWith("group:")) x.forum = v.slice(6); else if (v) x.by = v;
-    })}>
-      <option value="">{T.dec.nobody}</option>
-      {groups.length > 0 && <optgroup label={T.groupsWord}>{groups.map((g) => <option key={g} value={"group:" + g}>{tv(lang, g)}</option>)}</optgroup>}
-      {p.people.length > 0 && <optgroup label={T.teamMembers}>{p.people.map((x) => <option key={x.id} value={x.id}>{x.title || x.id}</option>)}</optgroup>}
-      {p.stakeholders.length > 0 && <optgroup label={T.stakeholdersWord}>{p.stakeholders.map((x) => <option key={x.id} value={x.id}>{x.title || x.id}</option>)}</optgroup>}
-    </select>
-  );
-}
 const Decider = ({ d }: { d: Decision }) => {
-  const { lang, T } = useApp();
-  if (d.by) return <Chip id={d.by} />;
-  if (d.forum) return <span className="badge type-team">{tv(lang, d.forum)}</span>;
-  return <span className="warn-text small">{T.dec.nobody}</span>;
+  const { T } = useApp();
+  return d.owners.length ? <OwnerChips item={d} /> : <span className="warn-text small">{T.dec.nobody}</span>;
 };
 
 /** What a decision affects, read from its links and grouped by kind. */
@@ -128,7 +106,8 @@ function DecisionEditor({ d }: { d: Decision }) {
         <div className="field-row"><label htmlFor={`dq-${d.id}`}>{D.question}</label>
           <textarea id={`dq-${d.id}`} className="input" rows={2} placeholder={D.questionPh} value={d.title} onChange={(e) => set((x) => { x.title = e.target.value; })} /></div>
         <div className="two">
-          <div className="field-row"><label htmlFor={`dw-${d.id}`}>{d.status === "Open" ? D.whoDecides : D.whoDecided}</label><DeciderSelect d={d} id={`dw-${d.id}`} /></div>
+          <div className="field-row"><label htmlFor={`dw-${d.id}`}>{d.status === "Open" ? D.whoDecides : D.whoDecided}</label>
+            <OwnersEditor id={`dw-${d.id}`} item={d} withStakeholders onChange={(owners, owner) => set((x) => { x.owners = owners; if (owner) x.owner = owner; else delete x.owner; })} /></div>
           {d.status === "Open"
             ? <div className="field-row"><label htmlFor={`dd-${d.id}`}>{D.decideBy}</label><input id={`dd-${d.id}`} className="input" type="date" value={d.due ?? ""} onChange={(e) => set((x) => { if (e.target.value) x.due = e.target.value; else delete x.due; })} /></div>
             : <div className="field-row"><label htmlFor={`dt-${d.id}`}>{D.decidedDate}</label><input id={`dt-${d.id}`} className="input" type="date" value={d.date} onChange={(e) => set((x) => { x.date = e.target.value; })} /></div>}
@@ -180,7 +159,7 @@ export function DecisionsView() {
         { id: "add", title: T.layout.p.add, col: "F", node: (
           <div className="card add-card">
             <AddRow coll="decisions" label={D.addQuestion} namePh={example ? D.newPh(example) : D.questionPh} onAdd={(id, title) => {
-              update((d) => { d.decisions.push({ id, title, status: "Open", date: "", options: [], links: [] }); });
+              update((d) => { d.decisions.push({ id, title, status: "Open", date: "", options: [], owners: [], links: [] }); });
               pick(id);
             }} />
             <p className="muted small m0">{D.raiseHint}</p>
@@ -217,7 +196,7 @@ export function DecisionsView() {
                       <span className="num muted small">{d.date || "–"}</span>
                       <span className="grow minw0"><b>{d.title || D.questionPh}</b>
                         {chosenText(d) && <span className="dec-choice">→ {chosenText(d)}</span>}
-                        <span className="muted small">{d.id} · {d.by ? titleOf(p, d.by) : d.forum ? tv(lang, d.forum) : D.nobody}</span></span>
+                        <span className="muted small">{d.id} · {d.owners.length ? ownerNames(p, d, (v) => tv(lang, v)) : D.nobody}</span></span>
                     </button>
                   </li>
                 ))}

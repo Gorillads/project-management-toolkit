@@ -1,9 +1,9 @@
-import type { AnyItem, CollKey, Lang, Project, Risk } from "../model/types";
+import type { AnyItem, CollKey, Lang, Project } from "../model/types";
 import { t, tv } from "../i18n";
 import { tplById } from "../data/templates";
 import { repairProject } from "../state/store";
 import { syncCats } from "./categories";
-import { COLLS, openIssueOf, ownerNames, ownersCell, parseOwners, peopleFor, pScore, risksFor, score, sev, titleOf } from "./links";
+import { COLLS, OWNED, openIssueOf, ownerNames, ownersCell, parseOwners, type Owned, peopleFor, pScore, risksFor, score, sev } from "./links";
 
 export function downloadBlob(data: Blob | string, filename: string, type = "text/plain") {
   const blob = typeof data === "string" ? new Blob([data], { type }) : data;
@@ -34,18 +34,18 @@ const CSV_MAP: Record<string, Partial<Record<Col, string>>> = {
   stakeholders: { Category: "cat", Type: "type", Owner: "org", Text: "need" },
   people: { Category: "group", Type: "role", Owner: "stakeholder", Status: "org", Text: "resp", Date: "email" },
   risks: { Category: "cat", Status: "status", Text: "mit", Cause: "cause", Consequence: "consequence" },
-  issues: { Category: "prio", Type: "from", Owner: "owner", Status: "status" },
-  decisions: { Category: "forum", Owner: "by", Date: "date", Status: "status", Type: "due", Text: "why" },
+  issues: { Category: "prio", Type: "from", Status: "status" },
+  decisions: { Date: "date", Status: "status", Type: "due", Text: "why" },
   assumptions: { Type: "kind", Status: "status" },
   changes: { Owner: "by", Status: "status", Number: "cost", Type: "weeks" },
   milestones: { Date: "date", Status: "done" },
-  tasks: { Status: "col", Owner: "owner" },
-  benefits: { Category: "kpi", Owner: "owner" },
+  tasks: { Status: "col" },
+  benefits: { Category: "kpi" },
   lessons: { Category: "source" },
-  wbs: { Category: "code", Owner: "owner", Date: "start", Type: "end", Number: "progress" },
+  wbs: { Category: "code", Date: "start", Type: "end", Number: "progress" },
   goals: { Type: "parent" },
-  criteria: { Type: "parent", Category: "target", Owner: "owner", Status: "status" },
-  deliverables: { Type: "parent", Owner: "owner", Date: "due", Status: "status" },
+  criteria: { Type: "parent", Category: "target", Status: "status" },
+  deliverables: { Type: "parent", Date: "due", Status: "status" },
 };
 const NUMERIC = new Set(["cost", "weeks", "progress"]);
 
@@ -60,7 +60,7 @@ export function projectCsv(p: Project): string {
       const r = it as unknown as Record<string, unknown>;
       const row: Record<Col, unknown> = { Register: c, ID: it.id, Title: it.title, Category: "", Type: "", Owner: "", Status: "", Date: "", Number: "", Text: "", Notes: it.notes ?? "", Scores: "", Links: it.links.join(" "), Serves: Array.isArray(r.serves) ? (r.serves as string[]).join(" ") : "", Cause: "", Consequence: "" };
       for (const [col, k] of Object.entries(m)) row[col as Col] = c === "milestones" && k === "done" ? (r.done ? "Done" : "Planned") : r[k as string] ?? "";
-      if (c === "risks") row.Owner = ownersCell(it as Risk);
+      if (OWNED.includes(c)) row.Owner = ownersCell(it as unknown as Owned);
       if ("sc" in r) row.Scores = Object.entries(r.sc as Record<string, number>).map(([k, v]) => `${k}=${v}`).join(", ");
       rows.push(COLS.map((k) => row[k]));
     }
@@ -128,7 +128,8 @@ export function importCsv(p: Project, text: string): { registers: string[]; rows
         it.sc = base;
       }
       if (c === "stakeholders") { it.type = it.type === "Internal" ? "Internal" : "External"; it.cat ??= ""; it.org ??= ""; it.need ??= ""; }
-      if (c === "risks") { Object.assign(it, parseOwners(get(r, "Owner"))); if (!it.owner) delete it.owner; it.cat ??= ""; it.status ??= "Open"; it.mit ??= ""; }
+      if (OWNED.includes(c)) { Object.assign(it, parseOwners(get(r, "Owner"))); if (!it.owner) delete it.owner; }
+      if (c === "risks") { it.cat ??= ""; it.status ??= "Open"; it.mit ??= ""; }
       if (c === "decisions") { it.options ??= []; it.status = it.status === "Open" ? "Open" : "Decided"; it.date ??= ""; }
       if (c === "criteria") { it.target ??= ""; it.status ??= "Draft"; }
       if (c === "deliverables") it.status ??= "Draft";
@@ -196,7 +197,7 @@ export async function buildDeck(p: Project, lang: Lang): Promise<Blob> {
       s.addTable(r, { ...tbl, x, y: 1.5, w: 6, fontSize: 10.5, valign: "top" });
     };
     col(T.pu.criteria, p.criteria.map((c) => ({ id: c.id, title: c.title, parent: c.parent, extra: [c.target, tv(lang, c.status)].filter(Boolean).join(" · ") })), 0.5);
-    col(T.pu.deliverables, p.deliverables.map((d) => ({ id: d.id, title: d.title, parent: d.parent, serves: d.serves, extra: [titleOf(p, d.owner), d.due, tv(lang, d.status)].filter(Boolean).join(" · ") })), 6.83);
+    col(T.pu.deliverables, p.deliverables.map((d) => ({ id: d.id, title: d.title, parent: d.parent, serves: d.serves, extra: [ownerNames(p, d, (v) => tv(lang, v)), d.due, tv(lang, d.status)].filter(Boolean).join(" · ") })), 6.83);
   }
 
   s = base(T.stakeholdersWord, `${p.stakeholders.filter((x) => x.type === "Internal").length} ${T.internal.toLowerCase()} · ${p.stakeholders.filter((x) => x.type === "External").length} ${T.external.toLowerCase()}`);
@@ -245,7 +246,7 @@ export async function buildDeck(p: Project, lang: Lang): Promise<Blob> {
   // @ts-expect-error see above
   s.addTable(it, { ...tbl, x: 0.5, y: 1.5, w: 6.1, colW: [0.5, 3.6, 0.7, 1.3] });
   const dt: unknown[][] = [[th(T.id), th(T.title), th(T.date), th(T.decidedBy)]];
-  p.decisions.forEach((x) => dt.push([x.id, x.title + ((o) => (o ? ` → ${o}` : ""))(x.options.find((o) => o.id === x.chosen)?.text), x.status === "Open" ? `${tv(lang, "Open")}${x.due ? " · " + x.due : ""}` : x.date, x.by ? titleOf(p, x.by) : x.forum ? tv(lang, x.forum) : ""]));
+  p.decisions.forEach((x) => dt.push([x.id, x.title + ((o) => (o ? ` → ${o}` : ""))(x.options.find((o) => o.id === x.chosen)?.text), x.status === "Open" ? `${tv(lang, "Open")}${x.due ? " · " + x.due : ""}` : x.date, ownerNames(p, x, (v) => tv(lang, v))]));
   // @ts-expect-error see above
   s.addTable(dt, { ...tbl, x: 6.8, y: 1.5, w: 6, colW: [0.5, 3.2, 1.1, 1.2] });
 

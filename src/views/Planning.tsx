@@ -1,9 +1,9 @@
 import { useRef } from "react";
-import type { BudgetLine, Task, WorkPackage } from "../model/types";
+import type { BudgetLine, WorkPackage } from "../model/types";
 import { nextId, pScore, sev } from "../lib/links";
 import { uid } from "../data/projects";
 import { Register } from "../components/Register";
-import { Chip, Chips, ItemEditor, ItemSelect, LinkEditor, ViewHead, rowClass, useApp, type Field } from "../components/ui";
+import { Chips, ItemEditor, OwnerChips, ItemSelect, LinkEditor, ViewHead, rowClass, useApp, type Field } from "../components/ui";
 import { downloadBlob, budgetCsv, readBudgetCsv } from "../lib/exporters";
 import { useState } from "react";
 
@@ -12,7 +12,7 @@ export function WbsView() {
   const fields: Field[] = [
     { k: "code", label: T.code, type: "text" },
     { k: "title", label: T.title, type: "text" },
-    { k: "owner", label: T.owner, type: "ref", only: ["people"] },
+    { k: "owners", label: T.owners, type: "owners" },
     { k: "start", label: T.start, type: "date" },
     { k: "end", label: T.end, type: "date" },
     { k: "progress", label: T.progress, type: "num" },
@@ -25,11 +25,11 @@ export function WbsView() {
       <ViewHead id="wbs" />
       <Register<WorkPackage> coll="wbs" fields={fields}
         items={undefined}
-        make={(id) => ({ id, code: "", title: "", progress: 0, links: [] })}
+        make={(id) => ({ id, code: "", title: "", progress: 0, owners: [], links: [] })}
         cols={[
           { h: T.code, r: (x) => <span className="num">{x.code}</span> },
           { h: T.title, r: (x) => <span style={{ paddingLeft: depth(x.code) * 16 }}><b>{x.title}</b></span> },
-          { h: T.owner, r: (x) => x.owner && <Chip id={x.owner} /> },
+          { h: T.owners, r: (x) => <OwnerChips item={x} /> },
           { h: T.progress, r: (x) => <span className="num">{x.progress ?? 0}%</span> },
         ]} />
     </>
@@ -98,12 +98,12 @@ export function BoardView() {
   const fields: Field[] = [
     { k: "title", label: T.title, type: "text" },
     { k: "col", label: T.column, type: "select", options: [{ v: "todo", l: T.todo }, { v: "doing", l: T.doing }, { v: "done", l: T.taskDone }] },
-    { k: "owner", label: T.owner, type: "ref", only: ["people"] },
+    { k: "owners", label: T.owners, type: "owners" },
     { k: "notes", label: T.notes, type: "textarea" },
     { k: "links", label: T.links, type: "links" },
   ];
   const drag = useRef<string | null>(null);
-  const add = (col: string) => { const id = nextId(p, "tasks"); update((pp) => { pp.tasks.push({ id, title: "", col, links: [] } as Task); }); setUi({ sel: { ...ui.sel, board: id } }); };
+  const add = (col: string) => { const id = nextId(p, "tasks"); update((pp) => { pp.tasks.push({ id, title: "", col, owners: [], links: [] }); }); setUi({ sel: { ...ui.sel, board: id } }); };
   return (
     <>
       <ViewHead id="board" />
@@ -115,7 +115,7 @@ export function BoardView() {
               {p.tasks.filter((x) => x.col === c).map((x) => (
                 <div key={x.id} draggable onDragStart={() => (drag.current = x.id)} className={"kcard " + rowClass(sel?.id === x.id, ui.flash === x.id)} onClick={() => setUi({ sel: { ...ui.sel, board: x.id }, flash: undefined })}>
                   <div><span className="id">{x.id}</span> <b>{x.title || "…"}</b></div>
-                  {x.owner && <div><Chip id={x.owner} /></div>}
+                  {x.owners.length > 0 && <div><OwnerChips item={x} /></div>}
                   <Chips ids={x.links} />
                 </div>
               ))}

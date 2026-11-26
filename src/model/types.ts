@@ -50,6 +50,9 @@ export interface Risk extends BaseItem {
 export interface Issue extends BaseItem {
   prio: string;
   status: string;
+  /** Everyone responsible (people or "group:<name>"). */
+  owners: string[];
+  /** Optional primary owner, one of `owners`. */
   owner?: string;
   from?: string;
   auto?: boolean;
@@ -59,14 +62,17 @@ export interface Issue extends BaseItem {
  *  side of the project triangle (0 none to 3 a lot; price, time, resources). */
 export interface DecisionOption { id: string; text: string; pro: string; con: string; tri: { fin: number; sched: number; res: number } }
 /** A decision the project needs or has made. The title is the question.
- *  While Open, `by` (a person) or `forum` (a group) decides by `due`. Once
- *  Decided, `chosen` names the option taken, `why` the reasons and `date`
- *  when. What it affects (risks, criteria, deliverables, actors) is in `links`. */
+ *  While Open, the owners (people, stakeholders or groups) decide by `due`;
+ *  the primary owner, if set, makes the final call. Once Decided, `chosen`
+ *  names the option taken, `why` the reasons and `date` when. What it
+ *  affects (risks, criteria, deliverables, actors) is in `links`. */
 export interface Decision extends BaseItem {
   status: "Open" | "Decided";
   date: string;
-  by?: string;
-  forum?: string;
+  /** Everyone responsible (people or "group:<name>"). */
+  owners: string[];
+  /** Optional primary owner, one of `owners`. */
+  owner?: string;
   due?: string;
   options: DecisionOption[];
   chosen?: string;
@@ -91,10 +97,16 @@ export interface Milestone extends BaseItem {
 }
 export interface Task extends BaseItem {
   col: string;
+  /** Everyone responsible (people or "group:<name>"). */
+  owners: string[];
+  /** Optional primary owner, one of `owners`. */
   owner?: string;
 }
 export interface Benefit extends BaseItem {
   kpi: string;
+  /** Everyone responsible (people or "group:<name>"). */
+  owners: string[];
+  /** Optional primary owner, one of `owners`. */
   owner?: string;
 }
 export interface Lesson extends BaseItem {
@@ -102,6 +114,9 @@ export interface Lesson extends BaseItem {
 }
 export interface WorkPackage extends BaseItem {
   code: string;
+  /** Everyone responsible (people or "group:<name>"). */
+  owners: string[];
+  /** Optional primary owner, one of `owners`. */
   owner?: string;
   start?: string;
   end?: string;
@@ -120,11 +135,17 @@ export interface Criterion extends BaseItem {
   serves: string[];
   target: string;
   status: string;
+  /** Everyone responsible (people or "group:<name>"). */
+  owners: string[];
+  /** Optional primary owner, one of `owners`. */
   owner?: string;
 }
 export interface Deliverable extends BaseItem {
   parent?: string;
   serves: string[];
+  /** Everyone responsible (people or "group:<name>"). */
+  owners: string[];
+  /** Optional primary owner, one of `owners`. */
   owner?: string;
   due?: string;
   status: string;

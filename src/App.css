@@ -667,3 +667,6 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
 .affects .chips { min-width: 0; }
 .affects .link-chip { max-width: 100%; }
 .affects .link-chip > button:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.link-chip.is-group { border-style: solid; background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+.link-chip.is-group .grp-label { padding: 2px 8px; font-size: 12px; white-space: nowrap; }
+.link-chip.is-group .grp-label::before { content: "👥 "; font-size: 11px; }

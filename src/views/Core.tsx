@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Analysis, Lens, Person, Project, Risk, Stakeholder } from "../model/types";
 import { tv, type Dict } from "../i18n";
 import { RISK_STATUSES, TRIANGLE } from "../data/catalog";
-import { openIssueOf, peopleFor, pScore, risksFor, toggleIssue } from "../lib/links";
+import { groupRef, openIssueOf, ownedByParty, peopleFor, pScore, risksFor, toggleIssue } from "../lib/links";
 import { AddRow, Backlinks, Chip, ItemEditor, OwnerChips, ScoreSelect, Sev, ViewHead, rowClass, useApp, useGoto, type Field } from "../components/ui";
 import { QualityTriangle, RiskHeat, StakeholderGrid } from "../components/Charts";
 import { looksLikeConsequence } from "../lib/riskText";
@@ -18,7 +18,7 @@ export const coreAnalysis = (p: Project, T: Dict): Analysis => ({
 });
 export const coreLens = (p: Project, T: Dict): Lens => ({ id: "core-pxi", name: T.riskMap, x: "i", y: "p", cats: [...new Set([...p.rCats, ...p.risks.map((r) => r.cat)])], sCat: "" });
 
-const ownedBy = (p: Project, pid: string) => p.risks.filter((r) => r.owners.includes(pid) || r.links.includes(pid));
+const ownedBy = (p: Project, pid: string) => p.risks.filter((r) => ownedByParty(p, r, pid) || r.links.includes(pid));
 
 function RiskList({ risks }: { risks: Risk[] }) {
   const { T } = useApp();
@@ -102,7 +102,8 @@ function groupsOf(p: Project): Group[] {
 /** Every risk a group is involved in: owned by a member or affecting one. */
 const groupRisks = (p: Project, g: Group) => {
   const ids = new Set(g.members);
-  return p.risks.filter((r) => r.owners.some((o) => ids.has(o)) || r.links.some((l) => ids.has(l)));
+  const ref = g.name ? groupRef(g.name) : "";
+  return p.risks.filter((r) => r.owners.some((o) => ids.has(o) || o === ref) || r.links.some((l) => ids.has(l)));
 };
 
 function GroupDetail({ g }: { g: Group }) {
@@ -294,7 +295,7 @@ export function RisksCoreView() {
                     {tri(r)}
                     <td><Sev s={pScore(r)} /></td>
                     {issues && <td><button type="button" className="issue-tg" aria-pressed={!!iss} onClick={(e) => { e.stopPropagation(); update((d) => toggleIssue(d, r.id, lang)); }}>⚑{iss ? " " + iss.id : ""}</button></td>}
-                    <td><OwnerChips risk={r} /></td>
+                    <td><OwnerChips item={r} /></td>
                   </tr>
                 );
               })}</tbody>

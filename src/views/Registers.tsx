@@ -3,7 +3,7 @@ import { tv } from "../i18n";
 import { CHANGE_STATUSES, ISSUE_STATUSES, PRIORITIES } from "../data/catalog";
 import { tplById } from "../data/templates";
 import { Register } from "../components/Register";
-import { Chip, LinkIcon, Status, ViewHead, useApp, type Field } from "../components/ui";
+import { Chip, LinkIcon, OwnerChips, Status, ViewHead, useApp, type Field } from "../components/ui";
 
 export const opts = (vals: string[], lang: "da" | "en", blank = false) => [...(blank ? [{ v: "", l: "–" }] : []), ...vals.map((v) => ({ v, l: tv(lang, v) }))];
 /** Options for an optional group: "No group" first. */
@@ -14,7 +14,7 @@ export function IssuesView() {
   const fields: Field[] = [
     { k: "title", label: T.title, type: "text" },
     { k: "from", label: T.fromRisk, type: "ref", only: ["risks"] },
-    { k: "owner", label: T.owner, type: "ref", only: ["people"] },
+    { k: "owners", label: T.owners, type: "owners" },
     { k: "prio", label: T.priority, type: "select", options: opts(PRIORITIES, lang) },
     { k: "status", label: T.status, type: "select", options: opts(ISSUE_STATUSES, lang) },
     { k: "notes", label: T.notes, type: "textarea" },
@@ -26,11 +26,11 @@ export function IssuesView() {
       <ViewHead id="issues" />
       <div className="card small note">{T.issueHint} <button type="button" className="link-chip solo" onClick={() => go("risks")}><LinkIcon />{T.tools.risks}</button></div>
       <Register<Issue> coll="issues" items={items} fields={fields}
-        make={(id) => ({ id, title: "", prio: "Medium", status: "Open", links: [] })}
+        make={(id) => ({ id, title: "", prio: "Medium", status: "Open", owners: [], links: [] })}
         cols={[
           { h: T.title, r: (x) => <><b>{x.title}</b>{x.auto && <> <span className="badge">{T.fromFlag}</span></>}</> },
           { h: T.fromRisk, r: (x) => x.from && <Chip id={x.from} /> },
-          { h: T.owner, r: (x) => x.owner && <Chip id={x.owner} /> },
+          { h: T.owners, r: (x) => <OwnerChips item={x} /> },
           { h: T.priority, r: (x) => <Status v={x.prio} /> },
           { h: T.status, r: (x) => <Status v={x.status} /> },
         ]} />
@@ -84,15 +84,15 @@ export function BenefitsView() {
   const fields: Field[] = [
     { k: "title", label: T.title, type: "text" },
     { k: "kpi", label: T.kpi, type: "text" },
-    { k: "owner", label: T.owner, type: "ref", only: ["people"] },
+    { k: "owners", label: T.owners, type: "owners" },
     { k: "notes", label: T.notes, type: "textarea" },
     { k: "links", label: T.links, type: "links" },
   ];
   return (
     <>
       <ViewHead id="benefits" />
-      <Register<Benefit> coll="benefits" fields={fields} make={(id) => ({ id, title: "", kpi: "", links: [] })}
-        cols={[{ h: T.title, r: (x) => <b>{x.title}</b> }, { h: T.kpi, r: (x) => x.kpi }, { h: T.owner, r: (x) => x.owner && <Chip id={x.owner} /> }]} />
+      <Register<Benefit> coll="benefits" fields={fields} make={(id) => ({ id, title: "", kpi: "", owners: [], links: [] })}
+        cols={[{ h: T.title, r: (x) => <b>{x.title}</b> }, { h: T.kpi, r: (x) => x.kpi }, { h: T.owners, r: (x) => <OwnerChips item={x} /> }]} />
     </>
   );
 }

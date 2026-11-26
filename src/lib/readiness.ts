@@ -28,7 +28,7 @@ export function readiness(p: Project): Step[] {
   const caused = p.risks.filter((r) => (r.cause ?? "").trim() && Math.max(r.sc.fin ?? 0, r.sc.sched ?? 0, r.sc.res ?? 0) > 0);
   const linked = p.risks.filter((r) => r.links.some((id) => ["S", "P", "DL"].includes(kindOf(p, id))));
   const open = p.decisions.filter((d) => d.status === "Open");
-  const ready = open.filter((d) => (d.by || d.forum) && d.due);
+  const ready = open.filter((d) => d.owners.length > 0 && d.due);
   const agreed = [...p.criteria, ...p.deliverables].filter((x) => x.status === "Agreed");
   const first = <T extends { id: string }>(all: T[], ok: T[]) => all.find((x) => !ok.includes(x))?.id;
   const every = <T extends { id: string }>(key: string, all: T[], ok: T[], view: string) =>

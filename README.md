@@ -48,6 +48,20 @@ Overview checklist asks that every open decision has someone who decides
 and a date. In the CSV the options are summarised; the project file keeps
 them in full.
 
+## Owners and responsibility
+
+Everything someone is responsible for (risks, issues, tasks, benefits, work
+packages, success criteria, deliverables and who decides a decision) can have
+**several owners**: team members, team groups such as the steering
+committee, and for decisions also stakeholders and stakeholder groups.
+Marking one of them as the **primary owner** is optional (click the star,
+click again to clear). A group owner follows the group if it is renamed.
+In the **RACI matrix** columns can be people or team groups; R
+(responsible) can be several, and A (accountable) is the optional primary
+owner, at most one per task. In the CSV, owners share the Owner column,
+separated by spaces, the primary marked `*` (e.g. `P2* P4
+group:Steering_committee`).
+
 ## Arrange each tab
 
 Every core tab (Overview, Purpose & success, Actors, Risks) is made of
@@ -98,10 +112,8 @@ Every project starts with the **core**:
   cause, gets a nudge to describe what could cause it. The **quality
   triangle** places each risk towards the sides it threatens and shows the
   exposure per side. Every project type suggests risks as events with a cause
-  and a typical consequence. A risk can have several owners; marking one as
-  the primary owner is optional (click the star, click again to clear). In
-  the CSV the owners share the Owner column, the primary marked `*` (e.g.
-  `P2* P4`).
+  and a typical consequence. Risk owners work like every other
+  responsibility in the toolkit (see below).
 
 Everything else is an **add-on**, switched on from "Add tools" on the
 Overview when the project needs it: stakeholder analysis (12 dimensions,

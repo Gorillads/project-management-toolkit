@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import type { AnyItem, CollKey, Project, Risk } from "../model/types";
+import type { AnyItem, CollKey, Project } from "../model/types";
 import { useProject, useStore } from "../state/store";
 import { t, tv } from "../i18n";
 import { PREFIX } from "../data/catalog";
-import { COLLS, chooseId, cleanId, deleteItem, indexOf, isAutoId, kindOf, nextId, ownersOf, refsOf, renameId } from "../lib/links";
+import { COLLS, chooseId, cleanId, deleteItem, indexOf, isAutoId, kindOf, nextId, ownersOf, partyName, refsOf, renameId, isGroupRef, groupRef, GROUP, type Owned } from "../lib/links";
 
 export function useApp() {
   const p = useProject();
@@ -158,8 +158,8 @@ export function ItemEditor({ coll, item, fields }: { coll: CollKey; item: AnyIte
         else if (f.type === "date") input = <input id={fid} className="input" type="date" value={(v as string) ?? ""} onChange={(e) => set(f.k, e.target.value)} />;
         else if (f.type === "bool") input = <input id={fid} type="checkbox" checked={!!v} onChange={(e) => set(f.k, e.target.checked)} />;
         else if (f.type === "ref") input = <ItemSelect id={fid} value={v as string} only={f.only} exclude={[item.id]} onChange={(x) => set(f.k, x)} />;
-        else if (f.type === "owners") input = <OwnersEditor id={fid} risk={item as Risk} onChange={(owners, owner) => update((p) => {
-          const it = (p[coll] as AnyItem[]).find((x) => x.id === item.id) as Risk | undefined;
+        else if (f.type === "owners") input = <OwnersEditor id={fid} item={item as unknown as Owned} withStakeholders={coll === "decisions"} onChange={(owners, owner) => update((p) => {
+          const it = (p[coll] as AnyItem[]).find((x) => x.id === item.id) as unknown as Owned | undefined;
           if (!it) return;
           it.owners = owners;
           if (owner) it.owner = owner; else delete it.owner;
@@ -183,38 +183,63 @@ export function ItemEditor({ coll, item, fields }: { coll: CollKey; item: AnyIte
   );
 }
 
-/** A risk's owners: add any number of team members; marking one as the
- *  primary owner is optional (click the star again to clear it). */
-export function OwnersEditor({ risk, onChange, id }: { risk: Risk; onChange: (owners: string[], owner?: string) => void; id?: string }) {
-  const { T } = useApp();
-  const list = ownersOf(risk);
+/** A person, stakeholder or group as a chip. Groups are "group:<name>". */
+export function Party({ id, onRemove }: { id: string; onRemove?: () => void }) {
+  const { lang, T } = useApp();
+  if (!isGroupRef(id)) return <Chip id={id} onRemove={onRemove} />;
+  return (
+    <span className="link-chip is-group" title={T.groupsWord}>
+      <span className="grp-label">{tv(lang, id.slice(GROUP.length))}</span>
+      {onRemove && <button type="button" className="chip-x" aria-label={T.del} onClick={(e) => { e.stopPropagation(); onRemove(); }}>×</button>}
+    </span>
+  );
+}
+
+/** Owners of anything someone is responsible for: any number of people or
+ *  groups; marking one as the primary owner is optional (click the star
+ *  again to clear it). Decisions can also be owned by stakeholders. */
+export function OwnersEditor({ item, onChange, id, withStakeholders }: { item: Owned; onChange: (owners: string[], owner?: string) => void; id?: string; withStakeholders?: boolean }) {
+  const { p, lang, T } = useApp();
+  const list = ownersOf(item);
+  const free = (xs: string[]) => xs.filter((x) => !item.owners.includes(x));
+  const teamGroups = free(p.pGroups.filter(Boolean).map(groupRef));
+  const stakeGroups = withStakeholders ? free(p.sCats.filter((c) => c && !p.pGroups.includes(c)).map(groupRef)) : [];
+  const people = p.people.filter((x) => !item.owners.includes(x.id));
+  const stakes = withStakeholders ? p.stakeholders.filter((x) => !item.owners.includes(x.id)) : [];
   return (
     <div className="owners-ed">
       {list.length > 0 && (
         <ul className="owner-list">
           {list.map((o) => {
-            const prim = o === risk.owner;
+            const prim = o === item.owner;
+            const name = partyName(p, o, (v) => tv(lang, v));
             return (
               <li key={o} className={prim ? "primary" : ""}>
-                <button type="button" className="star-btn" aria-pressed={prim} title={prim ? T.clearPrimary : T.makePrimary} aria-label={(prim ? T.clearPrimary : T.makePrimary) + ": " + o}
-                  onClick={() => onChange(risk.owners, prim ? undefined : o)}>{prim ? "★" : "☆"}</button>
-                <Chip id={o} onRemove={() => onChange(risk.owners.filter((x) => x !== o), prim ? undefined : risk.owner)} />
+                <button type="button" className="star-btn" aria-pressed={prim} title={prim ? T.clearPrimary : T.makePrimary} aria-label={(prim ? T.clearPrimary : T.makePrimary) + ": " + name}
+                  onClick={() => onChange(item.owners, prim ? undefined : o)}>{prim ? "★" : "☆"}</button>
+                <Party id={o} onRemove={() => onChange(item.owners.filter((x) => x !== o), prim ? undefined : item.owner)} />
                 {prim && <span className="muted small">{T.primaryOwner}</span>}
               </li>
             );
           })}
         </ul>
       )}
-      <ItemSelect id={id} value="" only={["people"]} exclude={risk.owners} placeholder={"+ " + T.addOwner} onChange={(x) => x && onChange([...risk.owners, x], risk.owner)} />
-      {list.length > 1 && !risk.owner && <span className="muted small">{T.primaryHint}</span>}
+      <select id={id} className="sel" value="" onChange={(e) => e.target.value && onChange([...item.owners, e.target.value], item.owner)}>
+        <option value="">+ {T.addOwner}</option>
+        {teamGroups.length > 0 && <optgroup label={T.teamGroups}>{teamGroups.map((g) => <option key={g} value={g}>{tv(lang, g.slice(GROUP.length))}</option>)}</optgroup>}
+        {people.length > 0 && <optgroup label={T.teamMembers}>{people.map((x) => <option key={x.id} value={x.id}>{x.title || x.id}{x.role ? " · " + x.role : ""}</option>)}</optgroup>}
+        {stakeGroups.length > 0 && <optgroup label={T.stakeholderGroups}>{stakeGroups.map((g) => <option key={g} value={g}>{tv(lang, g.slice(GROUP.length))}</option>)}</optgroup>}
+        {stakes.length > 0 && <optgroup label={T.stakeholdersWord}>{stakes.map((x) => <option key={x.id} value={x.id}>{x.title || x.id}</option>)}</optgroup>}
+      </select>
+      {list.length > 1 && !item.owner && <span className="muted small">{T.primaryHint}</span>}
     </div>
   );
 }
 
 /** Owner chips for tables: the primary owner first, marked with a star. */
-export function OwnerChips({ risk }: { risk: Risk }) {
+export function OwnerChips({ item }: { item: Owned }) {
   const { T } = useApp();
-  return <span className="owner-chips">{ownersOf(risk).map((o) => <span key={o} className="owner-chip">{o === risk.owner && risk.owners.length > 1 && <span className="star" title={T.primaryOwner} aria-label={T.primaryOwner}>★</span>}<Chip id={o} /></span>)}</span>;
+  return <span className="owner-chips">{ownersOf(item).map((o) => <span key={o} className="owner-chip">{o === item.owner && item.owners.length > 1 && <span className="star" title={T.primaryOwner} aria-label={T.primaryOwner}>★</span>}<Party id={o} /></span>)}</span>;
 }
 
 export function useSelected<K extends CollKey>(coll: K): Project[K][number] | undefined {

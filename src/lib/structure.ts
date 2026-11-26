@@ -16,7 +16,7 @@ export function flattenGoals(p: Project) {
   for (const g of p.goals.filter((x) => x !== top)) {
     const to = nextId(p, "criteria");
     // Reserve the new ID before renaming, so the next one is different.
-    p.criteria.push({ id: to, title: "", target: "", status: "Draft", serves: [], links: [] });
+    p.criteria.push({ id: to, title: "", target: "", status: "Draft", serves: [], owners: [], links: [] });
     renameId(p, g.id, to);
     moved.set(to, g.id);
   }
