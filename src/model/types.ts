@@ -84,6 +84,28 @@ export interface WorkPackage extends BaseItem {
   progress: number;
 }
 
+/** The why/how hierarchy. The project's purpose (charter.purpose) is the
+ *  root; goals are sub-purposes under it. Criteria measure goals, and
+ *  deliverables are measured by criteria. `serves` points one level up,
+ *  `parent` to a broader item on the same level. */
+export interface Goal extends BaseItem {
+  parent?: string;
+}
+export interface Criterion extends BaseItem {
+  parent?: string;
+  serves: string[];
+  target: string;
+  status: string;
+  owner?: string;
+}
+export interface Deliverable extends BaseItem {
+  parent?: string;
+  serves: string[];
+  owner?: string;
+  due?: string;
+  status: string;
+}
+
 export interface Collections {
   stakeholders: Stakeholder[];
   people: Person[];
@@ -97,6 +119,9 @@ export interface Collections {
   benefits: Benefit[];
   lessons: Lesson[];
   wbs: WorkPackage[];
+  goals: Goal[];
+  criteria: Criterion[];
+  deliverables: Deliverable[];
 }
 export type CollKey = keyof Collections;
 export type AnyItem = Collections[CollKey][number];

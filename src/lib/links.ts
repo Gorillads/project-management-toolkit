@@ -1,7 +1,7 @@
 import type { AnyItem, CollKey, Lang, Project, Risk } from "../model/types";
 import { COLL_PREFIX } from "../data/catalog";
 
-export const COLLS: CollKey[] = ["stakeholders", "people", "risks", "issues", "decisions", "assumptions", "changes", "milestones", "tasks", "benefits", "lessons", "wbs"];
+export const COLLS: CollKey[] = ["goals", "criteria", "deliverables", "stakeholders", "people", "risks", "issues", "decisions", "assumptions", "changes", "milestones", "tasks", "benefits", "lessons", "wbs"];
 /** Fallback for IDs not in the project (yet): the letters before the number. */
 export const typeOf = (id: string) => id.replace(/\d+$/, "");
 /** Which register an ID belongs to, as its prefix letter (S, P, R…). IDs can
@@ -35,7 +35,8 @@ export function indexOf(p: Project): Index {
   for (const { id, item } of all.values()) {
     for (const l of item.links) add(id, l);
     const it = item as unknown as Record<string, unknown>;
-    for (const k of ["owner", "by", "from", "stakeholder"]) if (typeof it[k] === "string") add(id, it[k] as string);
+    for (const k of ["owner", "by", "from", "stakeholder", "parent"]) if (typeof it[k] === "string") add(id, it[k] as string);
+    if (Array.isArray(it.serves)) for (const s of it.serves as string[]) add(id, s);
   }
   const idx = { all, refs };
   cache.set(p, idx);
@@ -73,7 +74,8 @@ export function renameId(p: Project, from: string, to: string) {
     if (it.id === from) it.id = to;
     it.links = swapAll(it.links);
     const r = it as unknown as Record<string, unknown>;
-    for (const k of ["owner", "by", "from", "stakeholder"]) if (r[k] === from) r[k] = to;
+    for (const k of ["owner", "by", "from", "stakeholder", "parent"]) if (r[k] === from) r[k] = to;
+    if (Array.isArray(r.serves)) r.serves = swapAll(r.serves as string[]);
   }
   p.charter.links = swapAll(p.charter.links);
   p.budget.forEach((b) => (b.links = swapAll(b.links)));
@@ -91,7 +93,8 @@ export function deleteItem(p: Project, id: string) {
   for (const c of COLLS) for (const it of p[c] as AnyItem[]) {
     it.links = it.links.filter((l) => l !== id);
     const r = it as unknown as Record<string, unknown>;
-    for (const k of ["owner", "by", "from", "stakeholder"]) if (r[k] === id) delete r[k];
+    for (const k of ["owner", "by", "from", "stakeholder", "parent"]) if (r[k] === id) delete r[k];
+    if (Array.isArray(r.serves)) r.serves = (r.serves as string[]).filter((s) => s !== id);
   }
   p.charter.links = p.charter.links.filter((l) => l !== id);
   p.budget.forEach((b) => (b.links = b.links.filter((l) => l !== id)));

@@ -28,7 +28,7 @@ export function parseProjectJson(text: string): Project {
  * One semicolon-separated file with a BOM (opens cleanly in Excel with
  * Danish characters), one row per item. Generic columns are mapped to each
  * register's own fields by CSV_MAP, so the same file reads back in. */
-const COLS = ["Register", "ID", "Title", "Category", "Type", "Owner", "Status", "Date", "Number", "Text", "Notes", "Scores", "Links"] as const;
+const COLS = ["Register", "ID", "Title", "Category", "Type", "Owner", "Status", "Date", "Number", "Text", "Notes", "Scores", "Links", "Serves"] as const;
 type Col = (typeof COLS)[number];
 const CSV_MAP: Record<string, Partial<Record<Col, string>>> = {
   stakeholders: { Category: "cat", Type: "type", Owner: "org", Text: "need" },
@@ -43,6 +43,9 @@ const CSV_MAP: Record<string, Partial<Record<Col, string>>> = {
   benefits: { Category: "kpi", Owner: "owner" },
   lessons: { Category: "source" },
   wbs: { Category: "code", Owner: "owner", Date: "start", Type: "end", Number: "progress" },
+  goals: { Type: "parent" },
+  criteria: { Type: "parent", Category: "target", Owner: "owner", Status: "status" },
+  deliverables: { Type: "parent", Owner: "owner", Date: "due", Status: "status" },
 };
 const NUMERIC = new Set(["cost", "weeks", "progress"]);
 
@@ -55,13 +58,14 @@ export function projectCsv(p: Project): string {
     const m = CSV_MAP[c];
     for (const it of p[c] as AnyItem[]) {
       const r = it as unknown as Record<string, unknown>;
-      const row: Record<Col, unknown> = { Register: c, ID: it.id, Title: it.title, Category: "", Type: "", Owner: "", Status: "", Date: "", Number: "", Text: "", Notes: it.notes ?? "", Scores: "", Links: it.links.join(" ") };
+      const row: Record<Col, unknown> = { Register: c, ID: it.id, Title: it.title, Category: "", Type: "", Owner: "", Status: "", Date: "", Number: "", Text: "", Notes: it.notes ?? "", Scores: "", Links: it.links.join(" "), Serves: Array.isArray(r.serves) ? (r.serves as string[]).join(" ") : "" };
       for (const [col, k] of Object.entries(m)) row[col as Col] = c === "milestones" && k === "done" ? (r.done ? "Done" : "Planned") : r[k as string] ?? "";
       if ("sc" in r) row.Scores = Object.entries(r.sc as Record<string, number>).map(([k, v]) => `${k}=${v}`).join(", ");
       rows.push(COLS.map((k) => row[k]));
     }
   }
-  for (const b of p.budget) rows.push(["budget", b.id, b.area, b.act, b.fc, b.fileId ?? "", "", "", b.plan, b.range ?? "", "", "", b.links.join(" ")]);
+  rows.push(["purpose", "PURPOSE", p.charter.purpose, "", "", "", "", "", "", "", "", "", "", ""]);
+  for (const b of p.budget) rows.push(["budget", b.id, b.area, b.act, b.fc, b.fileId ?? "", "", "", b.plan, b.range ?? "", "", "", b.links.join(" "), ""]);
   return toCsv(rows);
 }
 
@@ -94,6 +98,7 @@ export function importCsv(p: Project, text: string): { registers: string[]; rows
   const get = (r: string[], c: Col) => (ix(c) >= 0 ? (r[ix(c)] ?? "").trim() : "");
   let n = 0;
   for (const [reg, rs] of Object.entries(by)) {
+    if (reg === "purpose") { const t = get(rs[0], "Title"); if (t) p.charter.purpose = t; n++; continue; }
     if (reg === "budget") {
       p.budget = rs.map((r) => ({ id: get(r, "ID"), area: get(r, "Title"), plan: +get(r, "Number") || 0, act: +get(r, "Category") || 0, fc: +get(r, "Type") || 0, fileId: get(r, "Owner") || undefined, range: get(r, "Text") || undefined, links: get(r, "Links").split(/\s+/).filter(Boolean) }));
       n += rs.length; continue;
@@ -106,6 +111,7 @@ export function importCsv(p: Project, text: string): { registers: string[]; rows
       const it = structuredClone(old.get(id) ?? { id, title: "", links: [] }) as unknown as Record<string, unknown>;
       it.id = id; it.title = get(r, "Title");
       it.links = get(r, "Links").split(/\s+/).filter(Boolean);
+      if (c === "criteria" || c === "deliverables") it.serves = get(r, "Serves").split(/\s+/).filter(Boolean);
       const notes = get(r, "Notes"); if (notes) it.notes = notes; else delete it.notes;
       for (const [col, k] of Object.entries(CSV_MAP[c])) {
         const v = get(r, col as Col);
@@ -123,6 +129,8 @@ export function importCsv(p: Project, text: string): { registers: string[]; rows
       }
       if (c === "stakeholders") { it.type = it.type === "Internal" ? "Internal" : "External"; it.cat ??= ""; it.org ??= ""; it.need ??= ""; }
       if (c === "risks") { it.cat ??= ""; it.status ??= "Open"; it.mit ??= ""; }
+      if (c === "criteria") { it.target ??= ""; it.status ??= "Not measured"; }
+      if (c === "deliverables") it.status ??= "Not started";
       if (c === "tasks") it.col = ["todo", "doing", "done"].includes(it.col as string) ? it.col : "todo";
       return it as unknown as AnyItem;
     });
@@ -171,6 +179,24 @@ export async function buildDeck(p: Project, lang: Lang): Promise<Blob> {
   tpl.phases.forEach(([n, g], i) => { const x = 0.5 + i * 2.5; const done = i < p.phase, cur = i === p.phase; s.addShape(pres.ShapeType.chevron, { x, y: 3.4, w: 2.4, h: 0.6, fill: { color: done || cur ? C.acc : C.wash }, line: { color: done || cur ? C.acc : C.wash } }); s.addText(n[lang], { x: x + 0.2, y: 3.4, w: 2, h: 0.6, fontFace: F, fontSize: 12, bold: true, color: done || cur ? "FFFFFF" : C.acc, align: "center" }); s.addText("◆ " + g[lang], { x, y: 4.05, w: 2.4, h: 0.5, fontFace: F, fontSize: 10, color: C.soft, align: "center" }); });
   s.addText([{ text: T.tools.benefits, options: { bold: true, breakLine: true } }, ...p.benefits.map((b) => ({ text: b.title, options: { bullet: true, breakLine: true } }))], { x: 0.5, y: 4.8, w: 6, h: 2, fontFace: F, fontSize: 12, color: C.txt, valign: "top" });
   s.addText([{ text: `${T.tools.risks}: ${T.high}`, options: { bold: true, breakLine: true } }, ...highRisks.map((r) => ({ text: `${r.id} ${r.title}`, options: { bullet: true, breakLine: true } }))], { x: 6.9, y: 4.8, w: 6, h: 2, fontFace: F, fontSize: 12, color: C.txt, valign: "top" });
+
+  // the why/how hierarchy
+  if (p.goals.length || p.criteria.length || p.deliverables.length) {
+    s = base(T.tools.purpose, p.charter.purpose || undefined);
+    const col = (title: string, rows: { id: string; title: string; serves?: string[]; parent?: string; extra?: string }[], x: number) => {
+      const r: unknown[][] = [[th(title)]];
+      rows.forEach((it) => r.push([{ text: [
+        { text: `${it.id}  `, options: { color: C.soft, fontSize: 9 } },
+        { text: it.title, options: { bold: true, breakLine: true } },
+        { text: [it.parent ? `${T.pu.under} ${it.parent}` : "", it.serves?.length ? `→ ${it.serves.map((x) => (x === "PURPOSE" ? T.pu.purpose : x)).join(", ")}` : "", it.extra ?? ""].filter(Boolean).join(" · "), options: { color: C.soft, fontSize: 9 } },
+      ] }]));
+      // @ts-expect-error see above
+      s.addTable(r, { ...tbl, x, y: 1.5, w: 4, fontSize: 10.5, valign: "top" });
+    };
+    col(T.pu.goals, p.goals.map((g) => ({ id: g.id, title: g.title, parent: g.parent })), 0.5);
+    col(T.pu.criteria, p.criteria.map((c) => ({ id: c.id, title: c.title, parent: c.parent, serves: c.serves, extra: [c.target, tv(lang, c.status)].filter(Boolean).join(" · ") })), 4.67);
+    col(T.pu.deliverables, p.deliverables.map((d) => ({ id: d.id, title: d.title, parent: d.parent, serves: d.serves, extra: [titleOf(p, d.owner), d.due, tv(lang, d.status)].filter(Boolean).join(" · ") })), 8.83);
+  }
 
   s = base(T.stakeholdersWord, `${p.stakeholders.filter((x) => x.type === "Internal").length} ${T.internal.toLowerCase()} · ${p.stakeholders.filter((x) => x.type === "External").length} ${T.external.toLowerCase()}`);
   (["Internal", "External"] as const).forEach((ty, k) => {

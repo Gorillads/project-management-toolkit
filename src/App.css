@@ -436,3 +436,68 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
 .wz-groups .cat-editor { max-width: 520px; }
 .wz-card, .wz-row { min-width: 0; }
 .wz-row > .sel { max-width: 100%; min-width: 0; flex: 0 1 auto; }
+
+/* purpose & success: three bands, lines between them, why/how axis */
+.pu-card { padding: 16px 12px 16px 16px; }
+.pu-wrap { display: flex; gap: 8px; }
+.pu-diagram { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.pu-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.pu-lines path { fill: none; stroke: var(--accent-soft); stroke-width: 1.6; opacity: .55; transition: opacity .15s; }
+.pu-lines path.on { opacity: 1; stroke: var(--accent); stroke-width: 2.4; }
+.pu-lines path.off { opacity: .1; }
+.pu-band { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; padding: 18px 0; border-top: 1px dashed var(--border); }
+.pu-band:first-child { border-top: none; padding-top: 4px; }
+.pu-label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-soft); font-weight: 600; padding-top: 6px; }
+.pu-nodes { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.pu-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 16px; position: relative; z-index: 1; }
+.pu-node { position: relative; display: flex; flex-direction: column; gap: 3px; align-items: center; text-align: center; max-width: 220px; min-width: 120px; padding: 9px 12px; border: 1.5px solid var(--accent); background: var(--panel); color: var(--text); cursor: pointer; font-size: 13px; line-height: 1.3; transition: opacity .15s, box-shadow .15s; }
+.pu-node .pu-t { font-weight: 600; }
+.pu-node .pu-kind { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+.pu-node .pu-meta { font-size: 11.5px; color: var(--text-soft); }
+.pu-node.root { max-width: 560px; min-width: 260px; background: var(--accent); color: #fff; border-color: var(--accent); border-radius: 4px; padding: 12px 18px; }
+.pu-node.root .pu-t { font-weight: 600; font-size: 14px; }
+.pu-node.goal { border-radius: 4px; }
+.pu-node.crit { clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%); border: none; background: var(--accent-wash); padding: 9px 22px; }
+.pu-node.del { border-radius: 999px; padding: 10px 22px; }
+.pu-node.sub { transform: scale(.92); border-style: dashed; }
+.pu-node.crit.sub { background: color-mix(in srgb, var(--accent-wash) 60%, var(--panel)); }
+.pu-node.selected { box-shadow: 0 0 0 3px var(--warn); }
+.pu-node.crit.selected { background: var(--warn-wash); }
+.pu-node.dim { opacity: .3; }
+.pu-node.gap::after { content: "!"; position: absolute; top: -8px; right: -8px; width: 18px; height: 18px; border-radius: 50%; background: var(--danger); color: #fff; font-size: 12px; font-weight: 700; line-height: 18px; }
+.pu-node.crit.gap::after { top: 2px; right: 14px; }
+.pu-node.root.gap::after { background: var(--warn); }
+.pu-status { font-size: 10.5px; padding: 0 6px; border-radius: 999px; background: var(--bg); color: var(--text-soft); }
+.pu-status.s-on-track, .pu-status.s-met, .pu-status.s-delivered, .pu-status.s-accepted { background: var(--ok-wash); color: var(--ok); }
+.pu-status.s-at-risk, .pu-status.s-not-met { background: var(--danger-wash); color: var(--danger); }
+.pu-status.s-in-progress { background: var(--warn-wash); color: var(--warn); }
+.pu-axis { width: 46px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; font-size: 12px; font-weight: 600; color: var(--text-soft); text-transform: uppercase; letter-spacing: .06em; }
+.pu-arrow { flex: 1; width: 2px; background: var(--border); position: relative; }
+.pu-arrow.up::before { content: ""; position: absolute; top: -2px; left: -5px; border: 6px solid transparent; border-bottom: 8px solid var(--text-soft); border-top: none; }
+.pu-arrow.down::after { content: ""; position: absolute; bottom: -2px; left: -5px; border: 6px solid transparent; border-top: 8px solid var(--text-soft); border-bottom: none; }
+.pu-why, .pu-how { writing-mode: vertical-rl; transform: rotate(180deg); }
+.pu-chain { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 10px; background: var(--bg); border-radius: 8px; }
+.pu-chain .pill { font-size: 12px; }
+.lbl-like { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--text-soft); font-weight: 600; }
+.gap-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.gap-list .linked-row { align-items: flex-start; }
+.ok-note { margin: 0; color: var(--ok); font-size: 13px; line-height: 1.5; }
+@media (max-width: 760px) {
+  .pu-band { grid-template-columns: minmax(0, 1fr); }
+  .pu-axis { display: none; }
+  .pu-node { min-width: 0; max-width: 100%; }
+  .pu-node.root { min-width: 0; }
+  .pu-chain { grid-template-columns: minmax(0, 1fr); }
+}
+.pu-sum-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.stat .v.good { color: var(--ok); }
+@media (max-width: 760px) { .pu-sum-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pu-example { display: flex; flex-direction: column; gap: 10px; }
+.pu-ex-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; position: relative; }
+.pu-ex-steps li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: center; font-size: 13.5px; line-height: 1.45; }
+.pu-ex-text { font-size: 14px; margin-top: 2px; }
+.pu-ex-shape { width: 40px; height: 26px; border: 1.5px solid var(--accent); background: var(--panel); justify-self: center; }
+.pu-ex-shape.s0 { background: var(--accent); border-radius: 3px; }
+.pu-ex-shape.s1 { border: none; background: var(--accent-wash); clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%); }
+.pu-ex-shape.s2 { border-radius: 999px; }
+.pu-ex-details > summary { font-size: 13px; color: var(--accent); margin-bottom: 8px; }

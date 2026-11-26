@@ -7,6 +7,7 @@ import { uid } from "../data/projects";
 import { openIssueOf, piQuad, pScore, sev } from "../lib/links";
 import { Chip, LinkEditor, ViewHead, useApp } from "../components/ui";
 import { coreAnalysis, coreLens } from "./Core";
+import { gaps } from "./Purpose";
 import { Network, RiskHeat, StakeholderGrid } from "../components/Charts";
 import { PhaseFlow } from "./Registers";
 import { useStore } from "../state/store";
@@ -75,6 +76,17 @@ export function OverviewView() {
         <button type="button" className="stat stat-btn" onClick={() => go("actors")}><div className="v">{p.stakeholders.length}</div><div className="l">{T.stakeholdersWord}</div></button>
         <button type="button" className="stat stat-btn" onClick={() => go("risks")}><div className="v">{p.risks.length}</div><div className="l">{T.statRisks}</div></button>
         <button type="button" className="stat stat-btn" onClick={() => go("risks")}><div className={"v" + (high ? " bad" : "")}>{high}</div><div className="l">{T.statRisks}, {T.statHigh}</div></button>
+      </div>
+      <div className="card pu-summary">
+        <div className="card-head"><h3>{T.tools.purpose}</h3><button type="button" className="btn ghost small" onClick={() => go("purpose")}>{T.open}</button></div>
+        <div className="pu-sum-grid">
+          {([[p.goals.length, T.pu.goals, "↑ " + T.pu.why], [p.criteria.length, T.pu.criteria, ""], [p.deliverables.length, T.pu.deliverables, "↓ " + T.pu.how]] as const).map(([n, l, hint]) => (
+            <button key={l} type="button" className="stat stat-btn" onClick={() => go("purpose")}><div className="v">{n}</div><div className="l">{l} <span className="muted">{hint}</span></div></button>
+          ))}
+          {(() => { const g = gaps(p, T); return (
+            <button type="button" className="stat stat-btn" onClick={() => go("purpose")}><div className={"v" + (g.length ? " bad" : " good")}>{g.length}</div><div className="l">{T.pu.gaps}</div></button>
+          ); })()}
+        </div>
       </div>
       <div className="two">
         <div className="card"><div className="card-head"><h3>{T.powerInterest}</h3><button type="button" className="btn ghost small" onClick={() => go("actors")}>{T.open}</button></div><StakeholderGrid a={coreAnalysis(p, T)} mini /></div>

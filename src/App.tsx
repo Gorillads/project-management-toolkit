@@ -12,12 +12,13 @@ import { OverviewView, TemplatesView, CharterView, SwotView } from "./views/Proj
 import { StakeholdersView } from "./views/Stakeholders";
 import { RisksView } from "./views/Risks";
 import { ActorsView, RisksCoreView } from "./views/Core";
+import { PurposeView } from "./views/Purpose";
 import { IssuesView, DecisionsView, ChangesView, BenefitsView, LessonsView } from "./views/Registers";
 import { WbsView, ScheduleView, BoardView, BudgetView } from "./views/Planning";
 import { PeopleView, RaciView, EngagementView, CommsView } from "./views/PeopleViews";
 
 const VIEWS: Record<string, () => ReactNode> = {
-  overview: OverviewView, templates: TemplatesView, charter: CharterView, actors: ActorsView, stakeholders: StakeholdersView, risks: RisksCoreView, riskanalysis: RisksView,
+  overview: OverviewView, templates: TemplatesView, charter: CharterView, purpose: PurposeView, actors: ActorsView, stakeholders: StakeholdersView, risks: RisksCoreView, riskanalysis: RisksView,
   issues: IssuesView, decisions: DecisionsView, changes: ChangesView, wbs: WbsView, schedule: ScheduleView, board: BoardView,
   budget: BudgetView, people: PeopleView, raci: RaciView, engagement: EngagementView, comms: CommsView, swot: SwotView,
   benefits: BenefitsView, lessons: LessonsView,

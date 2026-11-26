@@ -81,6 +81,7 @@ export function repairProject(p: Project): Project {
     stakeholders: ["title", "cat", "type", "org", "need"], people: ["title", "role", "group", "org", "resp"], risks: ["title", "cat", "mit", "status"],
     issues: ["title", "prio", "status"], decisions: ["title", "date"], assumptions: ["title", "kind", "status"], changes: ["title", "status"],
     milestones: ["title", "date"], tasks: ["title", "col"], benefits: ["title", "kpi"], lessons: ["title", "source"], wbs: ["title", "code"],
+    goals: ["title"], criteria: ["title", "target", "status"], deliverables: ["title", "status"],
   };
   for (const [c, ks] of Object.entries(need)) {
     const list = (p as unknown as Record<string, unknown>)[c];
@@ -90,6 +91,7 @@ export function repairProject(p: Project): Project {
       str(it, ks);
       if (!Array.isArray(it.links)) it.links = [];
       if ((c === "stakeholders" || c === "risks") && (typeof it.sc !== "object" || !it.sc)) it.sc = {};
+      if ((c === "criteria" || c === "deliverables") && !Array.isArray(it.serves)) it.serves = [];
     }
   }
   p.charter ??= { purpose: "", inScope: "", outScope: "", budgetNote: "", goLive: "", links: [] };

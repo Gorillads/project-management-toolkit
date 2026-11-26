@@ -37,6 +37,10 @@ export const CHANGE_STATUSES = ["Under review", "Approved", "Rejected"];
 export const ASSUMPTION_KINDS = ["Assumption", "Dependency"];
 export const ASSUMPTION_STATUSES = ["Unverified", "Confirmed", "At risk", "In talks", "Broken"];
 export const TASK_COLS = ["todo", "doing", "done"];
+export const CRITERION_STATUSES = ["Not measured", "On track", "At risk", "Met", "Not met"];
+export const DELIVERABLE_STATUSES = ["Not started", "In progress", "Delivered", "Accepted"];
+/** Stands for the project's purpose in `serves`, which is not an item. */
+export const ROOT = "PURPOSE";
 export const ENG_LEVELS = [L("Unaware", "Uvidende"), L("Resistant", "Modstander"), L("Neutral", "Neutral"), L("Supportive", "Støtter"), L("Leading", "Driver")];
 
 export type ToolGroup = "core" | "project" | "registers" | "planning" | "people" | "review";
@@ -49,6 +53,7 @@ export interface ToolDef {
  *  add-on a project switches on when it needs it. */
 export const TOOLS: ToolDef[] = [
   { id: "overview", group: "core" },
+  { id: "purpose", group: "core" },
   { id: "actors", group: "core" },
   { id: "risks", group: "core" },
   { id: "stakeholders", group: "registers", optional: true },
@@ -70,7 +75,7 @@ export const TOOLS: ToolDef[] = [
   { id: "benefits", group: "review", optional: true },
   { id: "lessons", group: "review", optional: true },
 ];
-export const ALWAYS_ON = ["overview", "actors", "risks"];
+export const ALWAYS_ON = ["overview", "purpose", "actors", "risks"];
 export const DEFAULT_TOOLS = [...ALWAYS_ON];
 
 /** Prefix → which collection holds that item, and which tool shows it. */
@@ -87,5 +92,8 @@ export const PREFIX: Record<string, { coll: string; view: string }> = {
   B: { coll: "benefits", view: "benefits" },
   L: { coll: "lessons", view: "lessons" },
   W: { coll: "wbs", view: "wbs" },
+  G: { coll: "goals", view: "purpose" },
+  SC: { coll: "criteria", view: "purpose" },
+  DL: { coll: "deliverables", view: "purpose" },
 };
 export const COLL_PREFIX: Record<string, string> = Object.fromEntries(Object.entries(PREFIX).map(([p, v]) => [v.coll, p]));

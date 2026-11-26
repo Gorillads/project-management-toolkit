@@ -13,6 +13,16 @@ same Danish/English toggle, same "your data stays in your browser" model.
 
 Every project starts with the **core**:
 
+- **Purpose & success**: the project's why and how, as a hierarchy. One
+  **purpose** (the overall goal or vision) with optional sub-goals; measurable
+  **success criteria** (with sub-criteria) that show the goals are reached;
+  and **deliverables** (with sub-deliverables), the actual hand-ins, each
+  counting towards one or more criteria. Drawn as three bands with lines
+  between them: read upwards for why, downwards for how. Clicking an item
+  highlights its chain, and a logic check flags goals nobody measures,
+  criteria nothing delivers, and deliverables with no reason. Example: a
+  bridge whose purpose is to connect two areas, measured by "two lanes of
+  traffic", delivered as a working bridge with a given capacity.
 - **Overview**: the project's name and purpose, counts, the power/interest
   grid, the probability × impact map and the stakeholder ↔ risk network.
 - **Actors**: the team running the project and the stakeholders around it,
