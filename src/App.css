@@ -501,3 +501,23 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
 .pu-ex-shape.s1 { border: none; background: var(--accent-wash); clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%); }
 .pu-ex-shape.s2 { border-radius: 999px; }
 .pu-ex-details > summary { font-size: 13px; color: var(--accent); margin-bottom: 8px; }
+.pu-status.s-agreed { background: var(--ok-wash); color: var(--ok); }
+.pu-status.s-draft { background: var(--bg); color: var(--text-soft); border: 1px dashed var(--border); }
+/* development checklist */
+.dev-score { font-size: 13px; color: var(--text-soft); white-space: nowrap; }
+.dev-score b { font-size: 22px; color: var(--text); }
+.dev-bar { height: 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; margin: 2px 0 12px; }
+.dev-bar i { display: block; height: 100%; background: var(--ok); border-radius: 999px; transition: width .3s; }
+.dev-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 16px; counter-reset: dev; }
+.dev-steps li button { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 10px; align-items: start; width: 100%; text-align: left; border: 1px solid var(--border); background: var(--panel); border-radius: 8px; padding: 8px 10px; cursor: pointer; font-size: 13px; }
+.dev-steps li button:hover { border-color: var(--accent); }
+.dev-mark { width: 22px; height: 22px; border-radius: 50%; border: 1.5px dashed var(--text-soft); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+.dev-steps li.ok .dev-mark { border: none; background: var(--ok); color: #fff; }
+.dev-steps li.ok button { background: var(--bg); }
+.dev-steps li.ok b { color: var(--text-soft); font-weight: 600; }
+.dev-why { display: block; font-size: 12px; color: var(--text-soft); margin-top: 2px; line-height: 1.4; }
+.dev-go { font-size: 12px; color: var(--accent); white-space: nowrap; align-self: center; }
+.run-tools { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 10px; }
+.run-tools summary { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--text-soft); font-weight: 600; }
+@media (max-width: 900px) { .dev-steps { grid-template-columns: minmax(0, 1fr); } }
+.view-head > div:first-child { flex: 1 1 420px; min-width: 0; }

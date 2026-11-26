@@ -64,6 +64,7 @@ export function StakeholderGrid({ a, mini, selected, onPick }: { a: Analysis; mi
 export function RiskHeat({ l, selected, onPick }: { l: Lens; selected?: string; onPick?: (id: string) => void }) {
   const { p, lang } = useApp();
   const inScope = rScope(p, l);
+  const issues = p.enabled.includes("issues");
   const heat = (v: number) => (v >= 15 ? "h4" : v >= 10 ? "h3" : v >= 5 ? "h2" : "h1");
   return (
     <div className="matrix five">
@@ -73,7 +74,7 @@ export function RiskHeat({ l, selected, onPick }: { l: Lens; selected?: string; 
         ...[1, 2, 3, 4, 5].map((x) => (
           <div key={y + "-" + x} className={"cell " + heat(x * y)}>
             {inScope.filter((r) => r.sc[l.y] === y && r.sc[l.x] === x).map((r) => (
-              <button key={r.id} type="button" className={"rk" + (openIssueOf(p, r.id) ? " issue" : "") + (selected === r.id ? " selected" : "")} title={r.title} onClick={() => onPick?.(r.id)}>{r.id}</button>
+              <button key={r.id} type="button" className={"rk" + (issues && openIssueOf(p, r.id) ? " issue" : "") + (selected === r.id ? " selected" : "")} title={r.title} onClick={() => onPick?.(r.id)}>{r.id}</button>
             ))}
           </div>
         )),
@@ -87,6 +88,7 @@ export function RiskHeat({ l, selected, onPick }: { l: Lens; selected?: string; 
 export function Network({ cat }: { cat: string }) {
   const { p, lang } = useApp();
   const goto = useGoto();
+  const issues = p.enabled.includes("issues");
   const [focus, setFocus] = useState<{ k: "s" | "r"; id: string } | null>(null);
   const [pinned, setPinned] = useState<string | null>(null);
   const ss = p.stakeholders.filter((s) => !cat || s.cat === cat);
@@ -104,7 +106,7 @@ export function Network({ cat }: { cat: string }) {
   return (
     <svg className="net" viewBox={`0 0 ${W} ${H}`} width="100%" style={{ minWidth: 660, maxWidth: W, display: "block", marginInline: "auto" }} role="img" aria-label="Network">
       <text x={xS} y={14} textAnchor="end" fontSize={11} className="soft" letterSpacing=".06em">{lang === "da" ? "INTERESSENTER" : "STAKEHOLDERS"}</text>
-      <text x={xR} y={14} fontSize={11} className="soft" letterSpacing=".06em">{lang === "da" ? "RISICI (farve = S×K, ⚑ = problem)" : "RISKS (colour = P×I rating, ⚑ = issue)"}</text>
+      <text x={xR} y={14} fontSize={11} className="soft" letterSpacing=".06em">{lang === "da" ? `RISICI (farve = S×K${issues ? ", ⚑ = problem" : ""})` : `RISKS (colour = P×I rating${issues ? ", ⚑ = issue" : ""})`}</text>
       {lines.map((l) => {
         const y1 = offS + l.si * row, y2 = offR + l.ri * row;
         return <path key={l.r + l.s} className="net-line" style={{ opacity: focus ? (on(l) ? 1 : 0.08) : 0.55, strokeWidth: focus && on(l) ? 2.4 : 1.6 }} stroke={l.c} d={`M${xS} ${y1} C ${(xS + xR) / 2} ${y1}, ${(xS + xR) / 2} ${y2}, ${xR} ${y2}`} />;
@@ -122,7 +124,7 @@ export function Network({ cat }: { cat: string }) {
           onMouseEnter={() => !pinned && setFocus({ k: "r", id: r.id })} onMouseLeave={() => !pinned && setFocus(null)}
           onClick={() => act("r", r.id)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), act("r", r.id))}>
           <rect x={xR - 6} y={offR + i * row - 6} width={12} height={12} rx={2} fill={col[sev(pScore(r))]} />
-          <text x={xR + 14} y={offR + i * row + 4} fontSize={12.5}><tspan className="soft mono" fontSize={11}>{r.id}</tspan>{"  " + short(r.title)}{openIssueOf(p, r.id) ? "  ⚑" : ""}</text>
+          <text x={xR + 14} y={offR + i * row + 4} fontSize={12.5}><tspan className="soft mono" fontSize={11}>{r.id}</tspan>{"  " + short(r.title)}{issues && openIssueOf(p, r.id) ? "  ⚑" : ""}</text>
         </g>
       ))}
     </svg>

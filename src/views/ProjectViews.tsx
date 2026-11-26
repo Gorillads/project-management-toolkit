@@ -8,6 +8,7 @@ import { openIssueOf, piQuad, pScore, sev } from "../lib/links";
 import { Chip, LinkEditor, ViewHead, useApp } from "../components/ui";
 import { coreAnalysis, coreLens } from "./Core";
 import { gaps } from "./Purpose";
+import { readiness } from "../lib/readiness";
 import { Network, RiskHeat, StakeholderGrid } from "../components/Charts";
 import { PhaseFlow } from "./Registers";
 import { useStore } from "../state/store";
@@ -52,10 +53,18 @@ export function OverviewView() {
   const { p, lang, T, go, update, setUi } = useApp();
   const [cat, setCat] = useState("");
   const sum = useSummaries();
-  const high = p.risks.filter((r) => sev(pScore(r)) === "high").length;
   const addons = TOOLS.filter((t) => !ALWAYS_ON.includes(t.id));
   const added = addons.filter((t) => p.enabled.includes(t.id));
   const groups = [...new Set(addons.map((t) => t.group))];
+  const addonCard = (t: (typeof TOOLS)[number]) => {
+    const on = p.enabled.includes(t.id);
+    return (
+      <div key={t.id} className={"addon" + (on ? " on" : "")}>
+        <div className="minw0"><b>{T.tools[t.id]}</b><p>{T.blurbs[t.id]}</p></div>
+        <button type="button" className={"btn small" + (on ? " ghost" : "")} aria-pressed={on} onClick={() => toggle(t.id, !on)}>{on ? T.removeTool : "+ " + T.addTool}</button>
+      </div>
+    );
+  };
   const toggle = (id: string, on: boolean) => update((pp) => { pp.enabled = on ? [...pp.enabled.filter((x) => x !== id), id] : pp.enabled.filter((x) => x !== id); });
   const extraPinned = [
     ...(p.enabled.includes("stakeholders") ? p.analyses.filter((a) => a.pinned && a.id !== "pi") : []),
@@ -71,12 +80,31 @@ export function OverviewView() {
         </div>
       </div>
       {p.id === "example" && <div className="card small note">{T.exampleNote}</div>}
-      <div className="stats">
-        <button type="button" className="stat stat-btn" onClick={() => go("actors")}><div className="v">{p.people.length}</div><div className="l">{T.teamMembers}</div></button>
-        <button type="button" className="stat stat-btn" onClick={() => go("actors")}><div className="v">{p.stakeholders.length}</div><div className="l">{T.stakeholdersWord}</div></button>
-        <button type="button" className="stat stat-btn" onClick={() => go("risks")}><div className="v">{p.risks.length}</div><div className="l">{T.statRisks}</div></button>
-        <button type="button" className="stat stat-btn" onClick={() => go("risks")}><div className={"v" + (high ? " bad" : "")}>{high}</div><div className="l">{T.statRisks}, {T.statHigh}</div></button>
-      </div>
+      {(() => {
+        const steps = readiness(p);
+        const done = steps.filter((x) => x.done).length;
+        return (
+          <div className="card dev-card">
+            <div className="card-head"><div><h3 className="m0">{T.dev.title}</h3><p className="muted small m0">{T.dev.hint}</p></div>
+              <div className="dev-score"><b>{done}</b> / {steps.length} {T.dev.done}</div></div>
+            <div className="dev-bar" role="progressbar" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={done}><i style={{ width: `${(done / steps.length) * 100}%` }} /></div>
+            <ol className="dev-steps">
+              {steps.map((x) => {
+                const [label, why] = T.dev.steps[x.key];
+                return (
+                  <li key={x.key} className={x.done ? "ok" : ""}>
+                    <button type="button" onClick={() => go(x.view, x.sel)}>
+                      <span className="dev-mark" aria-hidden="true">{x.done ? "✓" : ""}</span>
+                      <span className="minw0"><b>{label}</b>{x.of !== undefined && x.of > 0 && <span className="muted small"> · {x.have}/{x.of}</span>}<span className="dev-why">{why}</span></span>
+                      {!x.done && <span className="dev-go">{T.dev.go} →</span>}
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        );
+      })()}
       <div className="card pu-summary">
         <div className="card-head"><h3>{T.tools.purpose}</h3><button type="button" className="btn ghost small" onClick={() => go("purpose")}>{T.open}</button></div>
         <div className="pu-sum-grid">
@@ -125,20 +153,18 @@ export function OverviewView() {
       <div className="card">
         <h3>{T.addTools}</h3>
         <p className="muted small m0">{T.addToolsHint}</p>
+        <div className="sub-h">{T.dev.shapeTools}</div>
         <div className="addons">
-          {groups.map((g) => [
-            <div key={g} className="group-h">{T.groups[g]}</div>,
-            ...addons.filter((t) => t.group === g).map((t) => {
-              const on = p.enabled.includes(t.id);
-              return (
-                <div key={t.id} className={"addon" + (on ? " on" : "")}>
-                  <div className="minw0"><b>{T.tools[t.id]}</b><p>{T.blurbs[t.id]}</p></div>
-                  <button type="button" className={"btn small" + (on ? " ghost" : "")} aria-pressed={on} onClick={() => toggle(t.id, !on)}>{on ? T.removeTool : "+ " + T.addTool}</button>
-                </div>
-              );
-            }),
-          ])}
+          {groups.map((g) => {
+            const list = addons.filter((t) => t.group === g && t.phase !== "run");
+            return list.length ? [<div key={g} className="group-h">{T.groups[g]}</div>, ...list.map(addonCard)] : null;
+          })}
         </div>
+        <details className="run-tools" open={addons.some((t) => t.phase === "run" && p.enabled.includes(t.id))}>
+          <summary>{T.dev.runTools}</summary>
+          <p className="muted small">{T.dev.runNote}</p>
+          <div className="addons">{addons.filter((t) => t.phase === "run").map(addonCard)}</div>
+        </details>
       </div>
     </>
   );

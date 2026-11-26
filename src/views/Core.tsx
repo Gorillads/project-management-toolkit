@@ -44,7 +44,7 @@ function StakeholderDetail({ s }: { s: Stakeholder }) {
   const set = (k: string, v: number) => update((d) => { const x = d.stakeholders.find((y) => y.id === s.id); if (x) x.sc[k] = v; });
   return (
     <div className="detail">
-      <div><span className="id">{s.id} · {T.stakeholderOne} · {tv(lang, s.type)}{s.cat ? " · " + tv(lang, s.cat) : ""}</span><h4>{s.title || "…"}</h4></div>
+      <div><span className="id">{s.id} · {T.stakeholderOne} · {tv(lang, s.type)}{s.cat && tv(lang, s.cat) !== tv(lang, s.type) ? " · " + tv(lang, s.cat) : ""}</span><h4>{s.title || "…"}</h4></div>
       <div className="row-gap">
         <span className="muted small">{T.wz.q.power}</span><ScoreSelect label={T.wz.q.power} value={s.sc.power ?? 3} onChange={(v) => set("power", v)} />
         <span className="muted small">{T.wz.q.interest}</span><ScoreSelect label={T.wz.q.interest} value={s.sc.interest ?? 3} onChange={(v) => set("interest", v)} />

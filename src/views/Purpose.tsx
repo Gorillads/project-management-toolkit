@@ -245,9 +245,9 @@ export function PurposeView() {
       <div className="card add-card">
         <AddRow coll="goals" label={U.addGoal} namePh={U.goalPh} onAdd={(id, t) => { update((d) => { d.goals.push({ id, title: t, links: [], ...(selGoal ? { parent: selGoal.id } : {}) }); }); select(id); }} />
         <AddRow coll="criteria" label={U.addCriterion + (critTarget ? ` ${U.forSel} “${title(critTarget)}”` : "")} namePh={U.criterionPh}
-          onAdd={(id, t) => { update((d) => { d.criteria.push({ id, title: t, target: "", status: "Not measured", serves: critTarget ? [critTarget] : d.goals.length ? [] : [ROOT], links: [] }); }); select(id); }} />
+          onAdd={(id, t) => { update((d) => { d.criteria.push({ id, title: t, target: "", status: "Draft", serves: critTarget ? [critTarget] : d.goals.length ? [] : [ROOT], links: [] }); }); select(id); }} />
         <AddRow coll="deliverables" label={U.addDeliverable + (delTarget ? ` ${U.forSel} “${title(delTarget)}”` : "")} namePh={U.deliverablePh}
-          onAdd={(id, t) => { update((d) => { d.deliverables.push({ id, title: t, status: "Not started", serves: delTarget ? [delTarget] : [], links: [] }); }); select(id); }} />
+          onAdd={(id, t) => { update((d) => { d.deliverables.push({ id, title: t, status: "Draft", serves: delTarget ? [delTarget] : [], links: [] }); }); select(id); }} />
       </div>
       <div className="card pu-card">
         <div className="pu-wrap">

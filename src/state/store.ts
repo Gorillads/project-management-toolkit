@@ -3,6 +3,7 @@ import { persist, createJSONStorage, type StateStorage } from "zustand/middlewar
 import type { Lang, Project } from "../model/types";
 import { exampleProject, projectFromTemplate } from "../data/projects";
 import { tplById } from "../data/templates";
+import { LEGACY_STATUS } from "../data/catalog";
 import { syncCats } from "../lib/categories";
 
 export const MAX_PROJECTS = 10;
@@ -92,6 +93,7 @@ export function repairProject(p: Project): Project {
       if (!Array.isArray(it.links)) it.links = [];
       if ((c === "stakeholders" || c === "risks") && (typeof it.sc !== "object" || !it.sc)) it.sc = {};
       if ((c === "criteria" || c === "deliverables") && !Array.isArray(it.serves)) it.serves = [];
+      if ((c === "criteria" || c === "deliverables") && !["Draft", "Agreed"].includes(it.status as string)) it.status = LEGACY_STATUS[it.status as string] ?? "Draft";
     }
   }
   p.charter ??= { purpose: "", inScope: "", outScope: "", budgetNote: "", goLive: "", links: [] };

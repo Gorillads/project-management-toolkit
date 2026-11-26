@@ -129,8 +129,8 @@ export function importCsv(p: Project, text: string): { registers: string[]; rows
       }
       if (c === "stakeholders") { it.type = it.type === "Internal" ? "Internal" : "External"; it.cat ??= ""; it.org ??= ""; it.need ??= ""; }
       if (c === "risks") { it.cat ??= ""; it.status ??= "Open"; it.mit ??= ""; }
-      if (c === "criteria") { it.target ??= ""; it.status ??= "Not measured"; }
-      if (c === "deliverables") it.status ??= "Not started";
+      if (c === "criteria") { it.target ??= ""; it.status ??= "Draft"; }
+      if (c === "deliverables") it.status ??= "Draft";
       if (c === "tasks") it.col = ["todo", "doing", "done"].includes(it.col as string) ? it.col : "todo";
       return it as unknown as AnyItem;
     });

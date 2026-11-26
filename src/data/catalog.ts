@@ -37,8 +37,13 @@ export const CHANGE_STATUSES = ["Under review", "Approved", "Rejected"];
 export const ASSUMPTION_KINDS = ["Assumption", "Dependency"];
 export const ASSUMPTION_STATUSES = ["Unverified", "Confirmed", "At risk", "In talks", "Broken"];
 export const TASK_COLS = ["todo", "doing", "done"];
-export const CRITERION_STATUSES = ["Not measured", "On track", "At risk", "Met", "Not met"];
-export const DELIVERABLE_STATUSES = ["Not started", "In progress", "Delivered", "Accepted"];
+/** While a project is being developed, criteria and deliverables are
+ *  shaped and agreed, not yet tracked. Progress states come with the
+ *  later project-management phase. */
+export const CRITERION_STATUSES = ["Draft", "Agreed"];
+export const DELIVERABLE_STATUSES = ["Draft", "Agreed"];
+/** Statuses from earlier versions, read as the nearest shaping state. */
+export const LEGACY_STATUS: Record<string, string> = { "Not measured": "Draft", "Not started": "Draft", "In progress": "Draft", "At risk": "Draft", "Not met": "Draft", "On track": "Agreed", Met: "Agreed", Delivered: "Agreed", Accepted: "Agreed" };
 /** Stands for the project's purpose in `serves`, which is not an item. */
 export const ROOT = "PURPOSE";
 export const ENG_LEVELS = [L("Unaware", "Uvidende"), L("Resistant", "Modstander"), L("Neutral", "Neutral"), L("Supportive", "Støtter"), L("Leading", "Driver")];
@@ -48,6 +53,9 @@ export interface ToolDef {
   id: string;
   group: ToolGroup;
   optional?: boolean;
+  /** "run": for running the project once it has started. The app is for
+   *  developing a project; these stay available but are set apart. */
+  phase?: "run";
 }
 /** The core (overview, actors, risks) is always on. Everything else is an
  *  add-on a project switches on when it needs it. */
@@ -58,14 +66,14 @@ export const TOOLS: ToolDef[] = [
   { id: "risks", group: "core" },
   { id: "stakeholders", group: "registers", optional: true },
   { id: "riskanalysis", group: "registers", optional: true },
-  { id: "issues", group: "registers", optional: true },
+  { id: "issues", group: "registers", optional: true, phase: "run" },
   { id: "decisions", group: "registers", optional: true },
-  { id: "changes", group: "registers", optional: true },
+  { id: "changes", group: "registers", optional: true, phase: "run" },
   { id: "templates", group: "project", optional: true },
   { id: "charter", group: "project", optional: true },
   { id: "wbs", group: "planning", optional: true },
   { id: "schedule", group: "planning", optional: true },
-  { id: "board", group: "planning", optional: true },
+  { id: "board", group: "planning", optional: true, phase: "run" },
   { id: "budget", group: "planning", optional: true },
   { id: "people", group: "people", optional: true },
   { id: "raci", group: "people", optional: true },

@@ -1,5 +1,12 @@
 # Project Management Toolkit
 
+**Focus: developing and shaping a project in its early phases.** The toolkit
+helps you work out why a project exists, how you will know it succeeded, what
+it will deliver, who is involved and what could go wrong, and checks that
+these fit together. Tools for running a project once it has started (issue
+log, task board, change requests) are kept apart as a later phase and will be
+built out later.
+
 A project management workspace where every tool knows about every other
 tool. A risk links to the stakeholders it involves, an issue links back to
 the risk it came from, a decision links to the milestones it changes, and
@@ -8,6 +15,18 @@ every item shows where else it appears. Built as a sibling of the
 same Danish/English toggle, same "your data stays in your browser" model.
 
 **Live:** https://gorillads.github.io/project-management-toolkit/
+
+## How well-shaped is the project?
+
+The Overview opens with a development checklist: the purpose is written and
+broken into goals; every goal has a success criterion with a target; every
+criterion has a deliverable and every deliverable a reason; the team is named;
+stakeholders and risks are identified; every risk has an owner, a response and
+a link to what it affects; and success criteria and deliverables are agreed.
+Each step shows how far it is (e.g. 3/5) and jumps to the first gap.
+
+Success criteria and deliverables are marked Draft or Agreed while the project
+is shaped; progress tracking belongs to the later management phase.
 
 ## Start simple, add as you go
 
