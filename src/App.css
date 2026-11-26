@@ -613,3 +613,16 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
   .pu-forest > .pu-tree { flex: 0 1 auto; min-width: 0; }
   .pu-forest .pu-node:not(.root) { min-width: 96px; }
 }
+
+/* Stakeholder analysis */
+.sa-source { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.sa-pick { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.sa-pick .sa-tabs { flex: 1 1 420px; }
+.sa-new { display: flex; gap: 8px; align-items: center; flex: 0 1 420px; }
+.sa-new .input { flex: 1; min-width: 0; }
+.sa-steps { display: flex; flex-direction: column; gap: 16px; }
+.sa-step { display: flex; gap: 12px; align-items: flex-start; }
+.sa-n { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 600; margin-top: 2px; }
+.sa-step .lbl { display: block; margin-bottom: 6px; }
+.sa-step .ctrl-row { margin: 0; }
+.empty-state { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }

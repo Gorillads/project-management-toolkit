@@ -28,6 +28,13 @@ Each step shows how far it is (e.g. 3/5) and jumps to the first gap.
 Success criteria and deliverables are marked Draft or Agreed while the project
 is shaped; progress tracking belongs to the later management phase.
 
+The **Stakeholder analysis** add-on analyses the stakeholders from the
+Actors tab; it does not add or edit actors (a link takes you to Actors for
+that). Pick or create an analysis, then set it up in three steps: name,
+who is included (by group or individually), and which two dimensions to
+compare (or add your own). The result is the grid and a score table where
+scores can be changed. Compare shows every analysis side by side.
+
 ## Arrange each tab
 
 Every core tab (Overview, Purpose & success, Actors, Risks) is made of
