@@ -110,9 +110,10 @@ export function initialAnswers(templateId: string, lang: Lang): Answers {
 export function buildProject(a: Answers, lang: Lang): Project {
   const p = projectFromTemplate(a.templateId, lang, a.name.trim() || (lang === "da" ? "Nyt projekt" : "New project"));
   p.org = a.org.trim();
-  p.charter.purpose = a.purpose.trim();
   const rows = activeRows(a);
   const ids = previewIds(a);
+  // The purpose answer becomes the purpose in the Purpose & success tab.
+  if (a.purpose.trim()) { const taken = new Set([...ids.values()]); let n = 1; while (taken.has("G" + n)) n++; p.goals = [{ id: "G" + n, title: a.purpose.trim(), links: [] }]; }
   p.people = rows.people.map((x) => ({ id: ids.get(x.key)!, title: x.name.trim() || x.role.trim(), role: x.role.trim(), group: x.group, org: p.org, resp: "", links: [] }));
   p.stakeholders = rows.stakes.map((x) => {
     const sc = Object.fromEntries(p.sDims.map((d) => [d.id, 3]));

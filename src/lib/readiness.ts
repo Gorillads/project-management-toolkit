@@ -1,5 +1,4 @@
 import type { Project } from "../model/types";
-import { ROOT } from "../data/catalog";
 import { kindOf } from "./links";
 
 /** One step in shaping a project. `have`/`of` say how far it is when the
@@ -18,6 +17,7 @@ export interface Step {
  *  why it exists, how success is known, what it delivers, who is involved,
  *  and what could go wrong. */
 export function readiness(p: Project): Step[] {
+  const tops = p.goals.filter((g) => !g.parent || !p.goals.some((x) => x.id === g.parent));
   const goalScope = (id: string): string[] => [id, ...p.goals.filter((g) => g.parent === id).flatMap((g) => goalScope(g.id))];
   const critScope = (id: string): string[] => [id, ...p.criteria.filter((c) => c.parent === id).flatMap((c) => critScope(c.id))];
   const measured = p.goals.filter((g) => p.criteria.some((c) => c.serves.some((s) => goalScope(g.id).includes(s))));
@@ -34,8 +34,8 @@ export function readiness(p: Project): Step[] {
   const every = <T extends { id: string }>(key: string, all: T[], ok: T[], view: string) =>
     ({ key, done: all.length > 0 && ok.length === all.length, have: ok.length, of: all.length, view, sel: first(all, ok) });
   return [
-    { key: "purpose", done: !!p.charter.purpose.trim(), view: "purpose", sel: ROOT },
-    { key: "goals", done: p.goals.length > 0 || p.criteria.some((c) => c.serves.includes(ROOT)), view: "purpose", sel: ROOT },
+    { key: "purpose", done: tops.length > 0 && !!tops[0].title.trim(), view: "purpose", sel: tops[0]?.id },
+    { key: "goals", done: p.goals.some((g) => g.parent && tops.some((t) => t.id === g.parent)), view: "purpose", sel: tops[0]?.id },
     every("measured", p.goals, measured, "purpose"),
     every("targets", p.criteria, withTarget, "purpose"),
     every("delivered", p.criteria, delivered, "purpose"),

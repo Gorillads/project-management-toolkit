@@ -195,12 +195,31 @@ export const useStore = create<AppStore>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 2,
+      version: 3,
       // v2: the app starts simple. Existing projects keep all their data but
       // show only the core tools until add-ons are switched on again.
       migrate: (state, version) => {
         const s = state as { projects?: Record<string, Project> };
         if (version < 2 && s.projects) for (const p of Object.values(s.projects)) p.enabled = ["overview", "actors", "risks"];
+        // v3: the purpose is an item in the Purpose tab, not the Overview's
+        // description. Copy the old text into a purpose goal once, put the
+        // old top-level goals under it, and point "PURPOSE" links at it.
+        if (version < 3 && s.projects) for (const p of Object.values(s.projects)) {
+          const goals = (p.goals ??= []), crits = p.criteria ?? [];
+          const text = (p.charter?.purpose ?? "").trim();
+          const usesRoot = crits.some((c) => (c.serves ?? []).includes("PURPOSE"));
+          if (!text && !goals.length && !usesRoot) continue;
+          let rootId = "";
+          if (text) {
+            const taken = new Set(goals.map((g) => g.id));
+            let n = 1; while (taken.has("G" + n)) n++;
+            rootId = "G" + n;
+            const old = goals.filter((g) => !g.parent);
+            goals.unshift({ id: rootId, title: text, links: [] });
+            old.forEach((g) => (g.parent = rootId));
+          } else rootId = goals.find((g) => !g.parent)?.id ?? "";
+          for (const c of crits) c.serves = (c.serves ?? []).flatMap((x) => (x === "PURPOSE" ? (rootId ? [rootId] : []) : [x]));
+        }
         return s as never;
       },
       // Runs on every load, after any migration.

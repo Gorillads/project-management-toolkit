@@ -64,7 +64,6 @@ export function projectCsv(p: Project): string {
       rows.push(COLS.map((k) => row[k]));
     }
   }
-  rows.push(["purpose", "PURPOSE", p.charter.purpose, "", "", "", "", "", "", "", "", "", "", "", "", ""]);
   for (const b of p.budget) rows.push(["budget", b.id, b.area, b.act, b.fc, b.fileId ?? "", "", "", b.plan, b.range ?? "", "", "", b.links.join(" "), "", "", ""]);
   return toCsv(rows);
 }
@@ -182,13 +181,14 @@ export async function buildDeck(p: Project, lang: Lang): Promise<Blob> {
 
   // the why/how hierarchy
   if (p.goals.length || p.criteria.length || p.deliverables.length) {
-    s = base(T.tools.purpose, p.charter.purpose || undefined);
+    const top = p.goals.find((g) => !g.parent || !p.goals.some((x) => x.id === g.parent));
+    s = base(T.tools.purpose, top ? `${T.pu.purpose}: ${top.title}` : undefined);
     const col = (title: string, rows: { id: string; title: string; serves?: string[]; parent?: string; extra?: string }[], x: number) => {
       const r: unknown[][] = [[th(title)]];
       rows.forEach((it) => r.push([{ text: [
         { text: `${it.id}  `, options: { color: C.soft, fontSize: 9 } },
         { text: it.title, options: { bold: true, breakLine: true } },
-        { text: [it.parent ? `${T.pu.under} ${it.parent}` : "", it.serves?.length ? `→ ${it.serves.map((x) => (x === "PURPOSE" ? T.pu.purpose : x)).join(", ")}` : "", it.extra ?? ""].filter(Boolean).join(" · "), options: { color: C.soft, fontSize: 9 } },
+        { text: [it.parent ? `${T.pu.under} ${it.parent}` : "", it.serves?.length ? `→ ${it.serves.join(", ")}` : "", it.extra ?? ""].filter(Boolean).join(" · "), options: { color: C.soft, fontSize: 9 } },
       ] }]));
       // @ts-expect-error see above
       s.addTable(r, { ...tbl, x, y: 1.5, w: 4, fontSize: 10.5, valign: "top" });

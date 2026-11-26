@@ -549,3 +549,10 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
 .risk-table th { font-size: 10.5px; letter-spacing: .03em; }
 .risk-table td:nth-child(2) { min-width: 160px; }
 .risk-table .link-chip { max-width: 104px; }
+/* purpose: each band is a forest, sub-items directly below their parent */
+.pu-forest { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 16px 18px; position: relative; z-index: 1; }
+.pu-tree { display: flex; flex-direction: column; align-items: center; gap: 22px; min-width: 0; }
+.pu-kids { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 12px 14px; }
+.pu-node.root { max-width: 420px; }
+.pu-lines path.sub { stroke-dasharray: 4 3; stroke: var(--text-soft); }
+.pu-lines path.sub.on { stroke: var(--accent); }

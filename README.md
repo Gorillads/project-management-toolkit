@@ -36,13 +36,17 @@ Every project starts with the **core**:
   **purpose** (the overall goal or vision) with optional sub-goals; measurable
   **success criteria** (with sub-criteria) that show the goals are reached;
   and **deliverables** (with sub-deliverables), the actual hand-ins, each
-  counting towards one or more criteria. Drawn as three bands with lines
-  between them: read upwards for why, downwards for how. Clicking an item
+  counting towards one or more criteria. The purpose is written in this tab
+  as the top item; it is separate from the project description on the
+  Overview. Drawn as three bands with lines between them: read upwards for
+  why, downwards for how. A sub-item sits directly below the item it belongs
+  to, joined by a dashed line, so a sub-goal hangs under its goal and a
+  sub-criterion under its criterion. Clicking an item
   highlights its chain, and a logic check flags goals nobody measures,
   criteria nothing delivers, and deliverables with no reason. Example: a
   bridge whose purpose is to connect two areas, measured by "two lanes of
   traffic", delivered as a working bridge with a given capacity.
-- **Overview**: the project's name and purpose, counts, the power/interest
+- **Overview**: the project's name and description, counts, the power/interest
   grid, the probability × impact map and the stakeholder ↔ risk network.
 - **Actors**: the team running the project and the stakeholders around it,
   in one list, with each stakeholder on the power/interest grid. Selecting an

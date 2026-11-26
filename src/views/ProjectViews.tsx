@@ -76,7 +76,7 @@ export function OverviewView() {
         <div>
           <input className="title-input" aria-label={T.projectName} value={p.name} onChange={(e) => update((pp) => { pp.name = e.target.value; })} />
           <input className="sub-input" aria-label={T.organisation} placeholder={T.organisation} value={p.org} onChange={(e) => update((pp) => { pp.org = e.target.value; })} />
-          <textarea className="sub-input purpose-input" rows={2} aria-label={T.purpose} placeholder={T.purpose} value={p.charter.purpose} onChange={(e) => update((pp) => { pp.charter.purpose = e.target.value; })} />
+          <textarea className="sub-input purpose-input" rows={2} aria-label={T.description} placeholder={T.description} value={p.charter.purpose} onChange={(e) => update((pp) => { pp.charter.purpose = e.target.value; })} />
         </div>
       </div>
       {p.id === "example" && <div className="card small note">{T.exampleNote}</div>}
