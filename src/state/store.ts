@@ -3,6 +3,7 @@ import { persist, createJSONStorage, type StateStorage } from "zustand/middlewar
 import type { Lang, Project } from "../model/types";
 import { exampleProject, projectFromTemplate } from "../data/projects";
 import { tplById } from "../data/templates";
+import { syncCats } from "../lib/categories";
 
 export const MAX_PROJECTS = 10;
 const STORAGE_KEY = "project-toolkit-v1";
@@ -96,6 +97,7 @@ export function repairProject(p: Project): Project {
   for (const k of ["budget", "files", "raci", "raciPeople", "analyses", "lenses", "sDims", "rDims", "sCats", "rCats", "pGroups"] as const) if (!Array.isArray(p[k])) (p as unknown as Record<string, unknown>)[k] = [];
   p.swot ??= { s: [], w: [], o: [], t: [] };
   p.templateId = tplById(p.templateId ?? "general").id;
+  syncCats(p);
   return p;
 }
 

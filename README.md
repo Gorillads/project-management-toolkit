@@ -29,6 +29,15 @@ budget with linked spreadsheets, people directory, RACI, engagement matrix,
 communication plan, SWOT, benefits and lessons learned. Removing an add-on
 keeps its data.
 
+## Groups and categories
+
+Team members and stakeholders can belong to a group, but don't have to: new
+ones start with no group. "Edit groups" on the Actors page edits the team
+groups and stakeholder groups, and "Edit categories" on the Risks page edits
+the risk categories. Add new ones, rename one (everyone in it moves along),
+reorder, or remove one (its members are kept, just without a group). New
+projects start with two team groups, Project team and Steering committee.
+
 ## IDs
 
 Every new item gets an ID field. Leave it empty and the next free ID is

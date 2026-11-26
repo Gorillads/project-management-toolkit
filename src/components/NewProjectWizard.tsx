@@ -113,12 +113,12 @@ export function NewProjectWizard({ open, templateId, onClose }: { open: boolean;
             {idInput("people", x.key, x.id, `${W.q.name2} ${i + 1}`)}
             <input className="input" aria-label={`${W.q.name2} ${i + 1}`} value={x.name} onChange={(e) => setRow("people", x.key, { name: e.target.value })} autoFocus={i === 0} />
             <input className="input" aria-label={`${W.q.role} ${i + 1}`} value={x.role} onChange={(e) => setRow("people", x.key, { role: e.target.value })} />
-            <select className="sel" aria-label={`${W.q.group} ${i + 1}`} value={x.group} onChange={(e) => setRow("people", x.key, { group: e.target.value })}>{P_GROUPS.map((g) => <option key={g} value={g}>{tv(lang, g)}</option>)}</select>
+            <select className="sel" aria-label={`${W.q.group} ${i + 1}`} value={x.group} onChange={(e) => setRow("people", x.key, { group: e.target.value })}><option value="">{T.noGroup}</option>{P_GROUPS.map((g) => <option key={g} value={g}>{tv(lang, g)}</option>)}</select>
             <button type="button" className="icon-x" aria-label={T.del} onClick={() => delRow("people", x.key)}>×</button>
           </div>
         ))}
       </div>
-      <button type="button" className="btn ghost small self-start" onClick={() => set({ people: [...a.people, { key: key(), id: "", name: "", role: "", group: "Project team" }] })}>+ {W.q.addPerson}</button>
+      <button type="button" className="btn ghost small self-start" onClick={() => set({ people: [...a.people, { key: key(), id: "", name: "", role: "", group: "" }] })}>+ {W.q.addPerson}</button>
       <p className="muted small m0">{T.idLabel}: {T.idHint}</p>
     </>
   );
@@ -132,14 +132,14 @@ export function NewProjectWizard({ open, templateId, onClose }: { open: boolean;
               <input type="checkbox" checked={x.on} aria-label={x.name || `${i + 1}`} onChange={(e) => setRow("stakes", x.key, { on: e.target.checked })} />
               {x.on && idInput("stakes", x.key, x.id, x.name || `${i + 1}`)}
               <input className="input grow" aria-label={`${T.name} ${i + 1}`} value={x.name} onChange={(e) => setRow("stakes", x.key, { name: e.target.value })} />
-              <select className="sel" aria-label={T.group} value={x.cat} onChange={(e) => setRow("stakes", x.key, { cat: e.target.value })}>{S_CATS.map((c) => <option key={c} value={c}>{tv(lang, c)}</option>)}</select>
+              <select className="sel" aria-label={T.group} value={x.cat} onChange={(e) => setRow("stakes", x.key, { cat: e.target.value })}><option value="">{T.noGroup}</option>{S_CATS.map((c) => <option key={c} value={c}>{tv(lang, c)}</option>)}</select>
               <select className="sel" aria-label={T.type} value={x.type} onChange={(e) => setRow("stakes", x.key, { type: e.target.value })}><option value="Internal">{T.internal}</option><option value="External">{T.external}</option></select>
             </div>
             {x.on && <div className="wz-row wz-scores"><span className="muted small">{W.q.power}</span><Level label={W.q.power} value={x.power} onChange={(v) => setRow("stakes", x.key, { power: v })} /><span className="muted small">{W.q.interest}</span><Level label={W.q.interest} value={x.interest} onChange={(v) => setRow("stakes", x.key, { interest: v })} /></div>}
           </div>
         ))}
       </div>
-      <button type="button" className="btn ghost small self-start" onClick={() => set({ stakes: [...a.stakes, { key: key(), id: "", name: "", cat: "Internal", type: "Internal", power: 3, interest: 3, on: true }] })}>+ {W.q.addStake}</button>
+      <button type="button" className="btn ghost small self-start" onClick={() => set({ stakes: [...a.stakes, { key: key(), id: "", name: "", cat: "", type: "Internal", power: 3, interest: 3, on: true }] })}>+ {W.q.addStake}</button>
     </>
   );
   if (step === 3) body = (

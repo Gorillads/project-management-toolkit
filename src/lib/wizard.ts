@@ -3,6 +3,7 @@ import { defaultAnalyses, projectFromTemplate } from "../data/projects";
 import { tplById } from "../data/templates";
 import { DEFAULT_TOOLS } from "../data/catalog";
 import { cleanId } from "./links";
+import { syncCats } from "./categories";
 
 /** Everything the new-project setup asks: the project, its actors and its
  *  risks. Rows carry a local `key` so a risk can name its owner and the
@@ -63,8 +64,8 @@ export function initialAnswers(templateId: string, lang: Lang): Answers {
   return {
     templateId, name: "", org: "", purpose: "",
     people: [
-      { key: key(), id: "", name: "", role: da ? "Projektleder" : "Project manager", group: "Project team" },
-      { key: key(), id: "", name: "", role: da ? "Projektejer / sponsor" : "Project sponsor", group: "Steering committee" },
+      { key: key(), id: "", name: "", role: da ? "Projektleder" : "Project manager", group: "" },
+      { key: key(), id: "", name: "", role: da ? "Projektejer / sponsor" : "Project sponsor", group: "" },
     ],
     ...templateDefaults(templateId, lang),
   };
@@ -89,6 +90,7 @@ export function buildProject(a: Answers, lang: Lang): Project {
     return { id: ids.get(x.key)!, title: x.title.trim(), cat: x.cat, status: "Open", mit: x.mit.trim(), owner: x.owner ? ids.get(x.owner) : undefined, links: x.affects.map((k) => ids.get(k)).filter(Boolean) as string[], sc };
   });
   p.enabled = [...DEFAULT_TOOLS];
+  syncCats(p);
   p.analyses = defaultAnalyses(p.stakeholders, lang);
   return p;
 }

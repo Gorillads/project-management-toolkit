@@ -5,7 +5,7 @@ import { nextId, peopleFor, pScore, risksFor, sev } from "../lib/links";
 import { uid } from "../data/projects";
 import { Backlinks, Chip, ItemEditor, ScoreSelect, Sev, ViewHead, rowClass, useApp, useGoto, type Field } from "../components/ui";
 import { StakeholderGrid, dimName } from "../components/Charts";
-import { opts } from "./Registers";
+import { groupOpts, opts } from "./Registers";
 
 export function ScoreProfile({ kind, id, sc, hl }: { kind: "S" | "R"; id: string; sc: Record<string, number>; hl: string[] }) {
   const { p, lang, update } = useApp();
@@ -32,7 +32,7 @@ function Detail({ s, hl }: { s: Stakeholder; hl: string[] }) {
   const fields: Field[] = [
     { k: "title", label: T.name, type: "text" },
     { k: "type", label: T.type, type: "select", options: opts(["Internal", "External"], lang) },
-    { k: "cat", label: T.group, type: "select", options: opts(p.sCats, lang) },
+    { k: "cat", label: T.group, type: "select", options: groupOpts(p.sCats, lang) },
     { k: "org", label: T.org, type: "text" },
     { k: "need", label: T.need, type: "textarea" },
     { k: "notes", label: T.notes, type: "textarea" },

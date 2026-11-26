@@ -424,3 +424,11 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
 .type-contact { border: 1px dashed var(--ok); color: var(--ok); }
 .wz-types { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 .wz-types .tpl { padding: 9px 11px; }
+.cat-details summary { font-size: 13px; color: var(--accent); }
+.cat-details[open] { padding-top: 4px; }
+.cat-details > p { margin: 6px 0 10px; }
+.cat-editor { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cat-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.cat-list li { display: flex; gap: 6px; align-items: center; }
+.cat-list .input { flex: 1; min-width: 0; padding: 4px 8px; }
+.icon-x:disabled { opacity: .3; cursor: default; }

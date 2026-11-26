@@ -8,7 +8,7 @@ import { Backlinks, Chip, ItemEditor, ScoreSelect, Sev, Status, ViewHead, rowCla
 import { Register } from "../components/Register";
 import { RiskHeat, dimName, rScope } from "../components/Charts";
 import { ScoreProfile } from "./Stakeholders";
-import { opts } from "./Registers";
+import { groupOpts, opts } from "./Registers";
 
 function IssueToggle({ r, label }: { r: Risk; label?: boolean }) {
   const { p, T, lang, update } = useApp();
@@ -26,7 +26,7 @@ function Detail({ r, lens }: { r: Risk; lens?: Lens }) {
   const goto = useGoto();
   const fields: Field[] = [
     { k: "title", label: T.title, type: "text" },
-    { k: "cat", label: T.category, type: "select", options: opts(p.rCats, lang) },
+    { k: "cat", label: T.category, type: "select", options: groupOpts(p.rCats, lang) },
     { k: "status", label: T.status, type: "select", options: opts(RISK_STATUSES, lang) },
     { k: "owner", label: T.owner, type: "ref", only: ["people"] },
     { k: "mit", label: T.mitigation, type: "textarea" },

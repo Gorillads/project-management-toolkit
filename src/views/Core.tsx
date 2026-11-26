@@ -5,7 +5,8 @@ import { RISK_STATUSES } from "../data/catalog";
 import { kindOf, openIssueOf, peopleFor, pScore, risksFor, toggleIssue } from "../lib/links";
 import { AddRow, Backlinks, Chip, ItemEditor, ScoreSelect, Sev, ViewHead, rowClass, useApp, useGoto, type Field } from "../components/ui";
 import { RiskHeat, StakeholderGrid } from "../components/Charts";
-import { opts } from "./Registers";
+import { groupOpts, opts } from "./Registers";
+import { CategoryEditor } from "../components/CategoryEditor";
 
 /** The core charts always cover every stakeholder and every risk. */
 export const coreAnalysis = (p: Project, T: Dict): Analysis => ({
@@ -34,7 +35,7 @@ function StakeholderDetail({ s }: { s: Stakeholder }) {
   const fields: Field[] = [
     { k: "title", label: T.name, type: "text" },
     { k: "type", label: T.type, type: "select", options: opts(["Internal", "External"], lang) },
-    { k: "cat", label: T.group, type: "select", options: opts(p.sCats, lang) },
+    { k: "cat", label: T.group, type: "select", options: groupOpts(p.sCats, lang) },
     { k: "org", label: T.org, type: "text" },
     { k: "need", label: T.need, type: "textarea" },
     { k: "notes", label: T.notes, type: "textarea" },
@@ -43,7 +44,7 @@ function StakeholderDetail({ s }: { s: Stakeholder }) {
   const set = (k: string, v: number) => update((d) => { const x = d.stakeholders.find((y) => y.id === s.id); if (x) x.sc[k] = v; });
   return (
     <div className="detail">
-      <div><span className="id">{s.id} · {T.stakeholderOne} · {tv(lang, s.type)}</span><h4>{s.title || "…"}</h4></div>
+      <div><span className="id">{s.id} · {T.stakeholderOne} · {tv(lang, s.type)}{s.cat ? " · " + tv(lang, s.cat) : ""}</span><h4>{s.title || "…"}</h4></div>
       <div className="row-gap">
         <span className="muted small">{T.wz.q.power}</span><ScoreSelect label={T.wz.q.power} value={s.sc.power ?? 3} onChange={(v) => set("power", v)} />
         <span className="muted small">{T.wz.q.interest}</span><ScoreSelect label={T.wz.q.interest} value={s.sc.interest ?? 3} onChange={(v) => set("interest", v)} />
@@ -62,7 +63,7 @@ function PersonDetail({ x }: { x: Person }) {
   const fields: Field[] = [
     { k: "title", label: T.name, type: "text" },
     { k: "role", label: T.role, type: "text" },
-    { k: "group", label: T.group, type: "select", options: opts(p.pGroups, lang) },
+    { k: "group", label: T.group, type: "select", options: groupOpts(p.pGroups, lang) },
     { k: "org", label: T.org, type: "text" },
     { k: "resp", label: T.resp, type: "textarea" },
     { k: "email", label: T.email, type: "text" },
@@ -71,7 +72,7 @@ function PersonDetail({ x }: { x: Person }) {
   ];
   return (
     <div className="detail">
-      <div><span className="id">{x.id} · {["Project team", "Steering committee"].includes(x.group) ? T.teamMember : T.contactPerson}{x.role ? " · " + x.role : ""}</span><h4>{x.title || "…"}</h4></div>
+      <div><span className="id">{x.id} · {T.teamMember}{x.group ? " · " + tv(lang, x.group) : ""}{x.role ? " · " + x.role : ""}</span><h4>{x.title || "…"}</h4></div>
       <div className="sub-h">{T.ownsRisks} ({ownedBy(p, x.id).length})</div>
       <RiskList risks={ownedBy(p, x.id)} />
       <ItemEditor coll="people" item={x} fields={fields} />
@@ -87,25 +88,33 @@ export function ActorsView() {
   const person = p.people.find((x) => x.id === selId);
   const stake = p.stakeholders.find((x) => x.id === selId);
   const rows = [
-    ...(filter !== "stake" ? p.people.map((x) => ({ id: x.id, name: x.title, kind: ["Project team", "Steering committee"].includes(x.group) ? T.teamMember : T.contactPerson, cls: ["Project team", "Steering committee"].includes(x.group) ? "type-team" : "type-contact", sub: x.role || tv(lang, x.group), risks: ownedBy(p, x.id).length })) : []),
-    ...(filter !== "team" ? p.stakeholders.map((x) => ({ id: x.id, name: x.title, kind: `${T.stakeholderOne} · ${tv(lang, x.type).toLowerCase()}`, cls: x.type === "Internal" ? "type-int" : "", sub: tv(lang, x.cat), risks: risksFor(p, x.id).length })) : []),
+    ...(filter !== "stake" ? p.people.map((x) => ({ id: x.id, name: x.title, kind: T.teamMember, cls: "type-team", sub: [x.role, x.group ? tv(lang, x.group) : ""].filter(Boolean).join(" · "), risks: ownedBy(p, x.id).length })) : []),
+    ...(filter !== "team" ? p.stakeholders.map((x) => ({ id: x.id, name: x.title, kind: `${T.stakeholderOne} · ${tv(lang, x.type).toLowerCase()}`, cls: x.type === "Internal" ? "type-int" : "", sub: x.cat ? tv(lang, x.cat) : "", risks: risksFor(p, x.id).length })) : []),
   ];
   return (
     <>
       <ViewHead id="actors" />
       <div className="card add-card">
         <AddRow coll="people" label={T.addTeamMember} namePh={T.personPh} onAdd={(id, title) => {
-          update((d) => { d.people.push({ id, title, role: "", group: "Project team", org: d.org, resp: "", links: [] }); });
+          update((d) => { d.people.push({ id, title, role: "", group: "", org: d.org, resp: "", links: [] }); });
           pick(id);
         }} />
         <AddRow coll="stakeholders" label={T.addStakeholderBtn} namePh={T.stakeholderPh} onAdd={(id, title) => {
           update((d) => {
             const everyone = d.analyses.filter((a) => d.stakeholders.every((s) => a.ids.includes(s.id)));
-            d.stakeholders.push({ id, title, cat: "Internal", type: "Internal", org: "", need: "", links: [], sc: Object.fromEntries(d.sDims.map((x) => [x.id, 3])) });
+            d.stakeholders.push({ id, title, cat: "", type: "Internal", org: "", need: "", links: [], sc: Object.fromEntries(d.sDims.map((x) => [x.id, 3])) });
             everyone.forEach((a) => a.ids.push(id));
           });
           pick(id);
         }} />
+        <details className="cat-details">
+          <summary>{T.manageGroups}</summary>
+          <p className="muted small">{T.catHint}</p>
+          <div className="two">
+            <CategoryEditor kind="pGroups" title={T.teamGroups} />
+            <CategoryEditor kind="sCats" title={T.stakeholderGroups} />
+          </div>
+        </details>
       </div>
       <div className="grid-2">
         <div className="card">
@@ -147,7 +156,7 @@ export function RisksCoreView() {
   const setSc = (id: string, k: string, v: number) => update((d) => { const r = d.risks.find((x) => x.id === id); if (r) r.sc[k] = v; });
   const fields: Field[] = [
     { k: "title", label: T.title, type: "text" },
-    { k: "cat", label: T.category, type: "select", options: opts([...new Set([...p.rCats, ...(sel ? [sel.cat] : [])])], lang) },
+    { k: "cat", label: T.category, type: "select", options: groupOpts(p.rCats, lang) },
     { k: "status", label: T.status, type: "select", options: opts(RISK_STATUSES, lang) },
     { k: "owner", label: T.owner, type: "ref", only: ["people"] },
     { k: "mit", label: T.mitigation, type: "textarea" },
@@ -163,6 +172,11 @@ export function RisksCoreView() {
           update((d) => { d.risks.push({ id, title, cat: d.rCats[0], mit: "", status: "Open", links: [], sc: Object.fromEntries(d.rDims.map((x) => [x.id, 3])) }); });
           pick(id);
         }} />
+        <details className="cat-details">
+          <summary>{T.manageCats}</summary>
+          <p className="muted small">{T.catHint}</p>
+          <CategoryEditor kind="rCats" title={T.riskCats} />
+        </details>
       </div>
       <div className="grid-2">
         <div className="card">
@@ -174,7 +188,7 @@ export function RisksCoreView() {
                 return (
                   <tr key={r.id} data-row={r.id} className={rowClass(selId === r.id, ui.flash === r.id)} onClick={() => pick(r.id)}>
                     <td><span className="id">{r.id}</span></td>
-                    <td><b>{r.title || "…"}</b><div className="cat">{tv(lang, r.cat)} · {tv(lang, r.status)}</div></td>
+                    <td><b>{r.title || "…"}</b><div className="cat">{[r.cat ? tv(lang, r.cat) : "", tv(lang, r.status)].filter(Boolean).join(" · ")}</div></td>
                     <td><ScoreSelect label={T.probability} value={r.sc.p ?? 3} onChange={(v) => setSc(r.id, "p", v)} /></td>
                     <td><ScoreSelect label={T.impact} value={r.sc.i ?? 3} onChange={(v) => setSc(r.id, "i", v)} /></td>
                     <td><Sev s={pScore(r)} /></td>

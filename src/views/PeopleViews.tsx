@@ -4,7 +4,7 @@ import { ENG_LEVELS } from "../data/catalog";
 import { uid } from "../data/projects";
 import { kindOf, nextId, peopleFor, piQuad, refsOf, risksFor } from "../lib/links";
 import { Chip, Chips, ItemEditor, ItemSelect, ViewHead, useApp, type Field } from "../components/ui";
-import { opts } from "./Registers";
+import { groupOpts } from "./Registers";
 
 const initials = (n: string) => n.split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 
@@ -14,7 +14,7 @@ export function PeopleView() {
   const fields: Field[] = [
     { k: "title", label: T.name, type: "text" },
     { k: "role", label: T.role, type: "text" },
-    { k: "group", label: T.group, type: "select", options: opts(p.pGroups, lang) },
+    { k: "group", label: T.group, type: "select", options: groupOpts(p.pGroups, lang) },
     { k: "org", label: T.org, type: "text" },
     { k: "resp", label: T.resp, type: "textarea" },
     { k: "email", label: T.email, type: "text" },
@@ -27,11 +27,11 @@ export function PeopleView() {
       <ViewHead id="people" />
       <div className="grid-2 wide-left">
         <div className="dir">
-          {p.pGroups.map((g) => {
-            const ms = p.people.filter((x) => x.group === g);
+          {[...p.pGroups, ...(p.people.some((x) => !x.group || !p.pGroups.includes(x.group)) ? [""] : [])].map((g) => {
+            const ms = g ? p.people.filter((x) => x.group === g) : p.people.filter((x) => !x.group || !p.pGroups.includes(x.group));
             return (
               <div key={g} className="card">
-                <div className="card-head"><h3>{tv(lang, g)} <span className="badge">{ms.length}</span></h3><button type="button" className="btn ghost small" onClick={() => add(g)}>+ {T.add}</button></div>
+                <div className="card-head"><h3>{g ? tv(lang, g) : T.noGroup} <span className="badge">{ms.length}</span></h3><button type="button" className="btn ghost small" onClick={() => add(g)}>+ {T.add}</button></div>
                 {ms.map((x) => {
                   const owns = refsOf(p, x.id).filter((i) => !["S", "P"].includes(kindOf(p, i)));
                   return (

@@ -6,6 +6,8 @@ import { Register } from "../components/Register";
 import { Chip, LinkIcon, Status, ViewHead, useApp, type Field } from "../components/ui";
 
 export const opts = (vals: string[], lang: "da" | "en", blank = false) => [...(blank ? [{ v: "", l: "–" }] : []), ...vals.map((v) => ({ v, l: tv(lang, v) }))];
+/** Options for an optional group: "No group" first. */
+export const groupOpts = (vals: string[], lang: "da" | "en") => [{ v: "", l: lang === "da" ? "Ingen gruppe" : "No group" }, ...vals.filter(Boolean).map((v) => ({ v, l: tv(lang, v) }))];
 
 export function IssuesView() {
   const { p, lang, T, go } = useApp();

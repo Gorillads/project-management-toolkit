@@ -4,7 +4,7 @@ import { tplById } from "./templates";
 
 export const S_CATS = ["Internal", "Investors", "Customers", "Partners", "Authorities & reps"];
 export const R_CATS = ["Technical", "Organisational", "Commercial", "Financial", "External"];
-export const P_GROUPS = ["Project team", "Steering committee", "Investors", "Customers", "Partners", "Authorities & reps"];
+export const P_GROUPS = ["Project team", "Steering committee"];
 
 let seq = 0;
 export const uid = (p: string) => `${p}${Date.now().toString(36)}${(++seq).toString(36)}`;

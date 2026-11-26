@@ -2,6 +2,7 @@ import type { AnyItem, CollKey, Lang, Project } from "../model/types";
 import { t, tv } from "../i18n";
 import { tplById } from "../data/templates";
 import { repairProject } from "../state/store";
+import { syncCats } from "./categories";
 import { COLLS, openIssueOf, peopleFor, pScore, risksFor, score, sev, titleOf } from "./links";
 
 export function downloadBlob(data: Blob | string, filename: string, type = "text/plain") {
@@ -120,13 +121,14 @@ export function importCsv(p: Project, text: string): { registers: string[]; rows
         for (const d of dims) base[d.id] ??= 3;
         it.sc = base;
       }
-      if (c === "stakeholders") { it.type = it.type === "Internal" ? "Internal" : "External"; it.cat ??= p.sCats[0]; it.org ??= ""; it.need ??= ""; }
-      if (c === "risks") { it.cat ??= p.rCats[0]; it.status ??= "Open"; it.mit ??= ""; }
+      if (c === "stakeholders") { it.type = it.type === "Internal" ? "Internal" : "External"; it.cat ??= ""; it.org ??= ""; it.need ??= ""; }
+      if (c === "risks") { it.cat ??= ""; it.status ??= "Open"; it.mit ??= ""; }
       if (c === "tasks") it.col = ["todo", "doing", "done"].includes(it.col as string) ? it.col : "todo";
       return it as unknown as AnyItem;
     });
     n += rs.length;
   }
+  syncCats(p);
   return { registers: Object.keys(by), rows: n };
 }
 
@@ -239,10 +241,11 @@ export async function buildDeck(p: Project, lang: Lang): Promise<Blob> {
 
   if (p.people.length) {
     s = base(T.tools.people);
-    const half = Math.ceil(p.pGroups.length / 2);
-    [p.pGroups.slice(0, half), p.pGroups.slice(half)].forEach((gs, k) => {
+    const groups = [...p.pGroups, ...(p.people.some((x) => !x.group || !p.pGroups.includes(x.group)) ? [""] : [])];
+    const half = Math.ceil(groups.length / 2);
+    [groups.slice(0, half), groups.slice(half)].forEach((gs, k) => {
       const rows: unknown[][] = [[th(T.name), th(T.role), th(T.resp)]];
-      gs.forEach((g) => { const ms = p.people.filter((x) => x.group === g); if (!ms.length) return; rows.push([{ text: tv(lang, g), options: { bold: true, colspan: 3, fill: { color: C.wash }, color: C.acc } }]); ms.forEach((x) => rows.push([x.title, x.role, x.resp])); });
+      gs.forEach((g) => { const ms = g ? p.people.filter((x) => x.group === g) : p.people.filter((x) => !x.group || !p.pGroups.includes(x.group)); if (!ms.length) return; rows.push([{ text: g ? tv(lang, g) : T.noGroup, options: { bold: true, colspan: 3, fill: { color: C.wash }, color: C.acc } }]); ms.forEach((x) => rows.push([x.title, x.role, x.resp])); });
       // @ts-expect-error see above
       if (rows.length > 1) s.addTable(rows, { ...tbl, x: 0.5 + k * 6.3, y: 1.5, w: 6, colW: [1.5, 1.6, 2.9], fontSize: 9 });
     });
