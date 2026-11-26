@@ -34,7 +34,7 @@ export function Register<T extends AnyItem>({ coll, items, cols, fields, make, e
               {rows.length === 0 && <tr><td colSpan={cols.length + 2} className="empty">{T.empty}</td></tr>}
               {rows.map((x) => {
                 const r = x as unknown as Record<string, unknown>;
-                const skip = [r.from, r.owner, r.by, r.stakeholder];
+                const skip = [r.from, r.owner, r.by, r.stakeholder, ...(Array.isArray(r.owners) ? r.owners : [])];
                 return (
                   <tr key={x.id} ref={ui.flash === x.id ? flashRef : undefined} data-row={x.id} className={rowClass(selId === x.id, ui.flash === x.id)} onClick={() => pick(x.id)}>
                     <td><span className="id">{x.id}</span></td>

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import type { AnyItem, CollKey, Project } from "../model/types";
+import type { AnyItem, CollKey, Project, Risk } from "../model/types";
 import { useProject, useStore } from "../state/store";
 import { t, tv } from "../i18n";
 import { PREFIX } from "../data/catalog";
-import { COLLS, chooseId, cleanId, deleteItem, indexOf, isAutoId, kindOf, nextId, refsOf, renameId } from "../lib/links";
+import { COLLS, chooseId, cleanId, deleteItem, indexOf, isAutoId, kindOf, nextId, ownersOf, refsOf, renameId } from "../lib/links";
 
 export function useApp() {
   const p = useProject();
@@ -125,7 +125,7 @@ export function ScoreSelect({ value, onChange, label }: { value: number; onChang
 }
 
 /** The schema-driven editor every register shares. */
-export type FieldType = "text" | "textarea" | "select" | "num" | "date" | "bool" | "ref" | "links";
+export type FieldType = "text" | "textarea" | "select" | "num" | "date" | "bool" | "ref" | "links" | "owners";
 export interface Field {
   k: string;
   label: string;
@@ -158,6 +158,12 @@ export function ItemEditor({ coll, item, fields }: { coll: CollKey; item: AnyIte
         else if (f.type === "date") input = <input id={fid} className="input" type="date" value={(v as string) ?? ""} onChange={(e) => set(f.k, e.target.value)} />;
         else if (f.type === "bool") input = <input id={fid} type="checkbox" checked={!!v} onChange={(e) => set(f.k, e.target.checked)} />;
         else if (f.type === "ref") input = <ItemSelect id={fid} value={v as string} only={f.only} exclude={[item.id]} onChange={(x) => set(f.k, x)} />;
+        else if (f.type === "owners") input = <OwnersEditor id={fid} risk={item as Risk} onChange={(owners, owner) => update((p) => {
+          const it = (p[coll] as AnyItem[]).find((x) => x.id === item.id) as Risk | undefined;
+          if (!it) return;
+          it.owners = owners;
+          if (owner) it.owner = owner; else delete it.owner;
+        })} />;
         else if (f.type === "links") input = <LinkEditor ids={item.links} self={item.id} onChange={(ids) => set("links", ids)} />;
         else input = <input id={fid} className="input" value={(v as string) ?? ""} onChange={(e) => set(f.k, e.target.value)} />;
         return (
@@ -175,6 +181,40 @@ export function ItemEditor({ coll, item, fields }: { coll: CollKey; item: AnyIte
       </div>
     </div>
   );
+}
+
+/** A risk's owners: add any number of team members; marking one as the
+ *  primary owner is optional (click the star again to clear it). */
+export function OwnersEditor({ risk, onChange, id }: { risk: Risk; onChange: (owners: string[], owner?: string) => void; id?: string }) {
+  const { T } = useApp();
+  const list = ownersOf(risk);
+  return (
+    <div className="owners-ed">
+      {list.length > 0 && (
+        <ul className="owner-list">
+          {list.map((o) => {
+            const prim = o === risk.owner;
+            return (
+              <li key={o} className={prim ? "primary" : ""}>
+                <button type="button" className="star-btn" aria-pressed={prim} title={prim ? T.clearPrimary : T.makePrimary} aria-label={(prim ? T.clearPrimary : T.makePrimary) + ": " + o}
+                  onClick={() => onChange(risk.owners, prim ? undefined : o)}>{prim ? "★" : "☆"}</button>
+                <Chip id={o} onRemove={() => onChange(risk.owners.filter((x) => x !== o), prim ? undefined : risk.owner)} />
+                {prim && <span className="muted small">{T.primaryOwner}</span>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <ItemSelect id={id} value="" only={["people"]} exclude={risk.owners} placeholder={"+ " + T.addOwner} onChange={(x) => x && onChange([...risk.owners, x], risk.owner)} />
+      {list.length > 1 && !risk.owner && <span className="muted small">{T.primaryHint}</span>}
+    </div>
+  );
+}
+
+/** Owner chips for tables: the primary owner first, marked with a star. */
+export function OwnerChips({ risk }: { risk: Risk }) {
+  const { T } = useApp();
+  return <span className="owner-chips">{ownersOf(risk).map((o) => <span key={o} className="owner-chip">{o === risk.owner && risk.owners.length > 1 && <span className="star" title={T.primaryOwner} aria-label={T.primaryOwner}>★</span>}<Chip id={o} /></span>)}</span>;
 }
 
 export function useSelected<K extends CollKey>(coll: K): Project[K][number] | undefined {

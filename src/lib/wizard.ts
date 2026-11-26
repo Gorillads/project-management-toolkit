@@ -123,7 +123,7 @@ export function buildProject(a: Answers, lang: Lang): Project {
   p.risks = rows.risks.map((x) => {
     const sc = Object.fromEntries(p.rDims.map((d) => [d.id, 3]));
     sc.p = x.p; sc.fin = x.fin; sc.sched = x.sched; sc.res = x.res; sc.i = Math.max(1, x.fin, x.sched, x.res);
-    return { id: ids.get(x.key)!, title: x.title.trim(), cat: x.cat, cause: (x.cause ?? "").trim(), consequence: "", status: "Open", mit: x.mit.trim(), owner: x.owner ? ids.get(x.owner) : undefined, links: x.affects.map((k) => ids.get(k)).filter(Boolean) as string[], sc };
+    return { id: ids.get(x.key)!, title: x.title.trim(), cat: x.cat, cause: (x.cause ?? "").trim(), consequence: "", status: "Open", mit: x.mit.trim(), owners: x.owner && ids.get(x.owner) ? [ids.get(x.owner)!] : [], links: x.affects.map((k) => ids.get(k)).filter(Boolean) as string[], sc };
   });
   p.pGroups = [...a.pGroups];
   p.sCats = [...a.sCats];

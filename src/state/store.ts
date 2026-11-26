@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage, type StateStorage } from "zustand/middleware";
 import type { Lang, Project } from "../model/types";
 import { exampleProject, projectFromTemplate } from "../data/projects";
+import { syncOwners } from "../lib/links";
 import { tplById } from "../data/templates";
 import { DEFAULT_R_DIMS, LEGACY_STATUS, impactOf } from "../data/catalog";
 import { syncCats } from "../lib/categories";
@@ -76,7 +77,7 @@ function remember(id: string, prev: Project) {
 
 /** Keep each risk's overall impact equal to its worst triangle consequence. */
 export function syncImpact(p: Project) {
-  for (const r of p.risks) { if (r.sc) r.sc.i = impactOf(r.sc); }
+  for (const r of p.risks) { if (r.sc) r.sc.i = impactOf(r.sc); syncOwners(r); }
 }
 
 /** Make stored data safe to render: every item gets the text fields and
@@ -109,7 +110,7 @@ export function repairProject(p: Project): Project {
   // Risk dimensions follow the triangle: built-ins get their current names,
   // and "resources" is added where it was missing (scored 0 = not assessed).
   for (const d of DEFAULT_R_DIMS) { const have = p.rDims.find((x) => x.id === d.id); if (have) have.name = d.name; else p.rDims.splice(p.rDims.findIndex((x) => x.id === "sched") + 1 || p.rDims.length, 0, { ...d }); }
-  for (const r of p.risks) { r.sc ??= {}; r.sc.res ??= 0; r.sc.fin ??= 0; r.sc.sched ??= 0; if (typeof r.cause !== "string") r.cause = ""; if (typeof r.consequence !== "string") r.consequence = ""; }
+  for (const r of p.risks) { r.sc ??= {}; r.sc.res ??= 0; r.sc.fin ??= 0; r.sc.sched ??= 0; if (typeof r.cause !== "string") r.cause = ""; if (typeof r.consequence !== "string") r.consequence = ""; syncOwners(r); }
   syncImpact(p);
   syncCats(p);
   return p;

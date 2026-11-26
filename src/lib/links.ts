@@ -36,7 +36,7 @@ export function indexOf(p: Project): Index {
     for (const l of item.links) add(id, l);
     const it = item as unknown as Record<string, unknown>;
     for (const k of ["owner", "by", "from", "stakeholder", "parent"]) if (typeof it[k] === "string") add(id, it[k] as string);
-    if (Array.isArray(it.serves)) for (const s of it.serves as string[]) add(id, s);
+    for (const k of ["serves", "owners"]) if (Array.isArray(it[k])) for (const s of it[k] as string[]) add(id, s);
   }
   const idx = { all, refs };
   cache.set(p, idx);
@@ -75,7 +75,7 @@ export function renameId(p: Project, from: string, to: string) {
     it.links = swapAll(it.links);
     const r = it as unknown as Record<string, unknown>;
     for (const k of ["owner", "by", "from", "stakeholder", "parent"]) if (r[k] === from) r[k] = to;
-    if (Array.isArray(r.serves)) r.serves = swapAll(r.serves as string[]);
+    for (const k of ["serves", "owners"]) if (Array.isArray(r[k])) r[k] = swapAll(r[k] as string[]);
   }
   p.charter.links = swapAll(p.charter.links);
   p.budget.forEach((b) => (b.links = swapAll(b.links)));
@@ -94,7 +94,7 @@ export function deleteItem(p: Project, id: string) {
     it.links = it.links.filter((l) => l !== id);
     const r = it as unknown as Record<string, unknown>;
     for (const k of ["owner", "by", "from", "stakeholder", "parent"]) if (r[k] === id) delete r[k];
-    if (Array.isArray(r.serves)) r.serves = (r.serves as string[]).filter((s) => s !== id);
+    for (const k of ["serves", "owners"]) if (Array.isArray(r[k])) r[k] = (r[k] as string[]).filter((s) => s !== id);
   }
   p.charter.links = p.charter.links.filter((l) => l !== id);
   p.budget.forEach((b) => (b.links = b.links.filter((l) => l !== id)));
@@ -119,7 +119,7 @@ export function toggleIssue(p: Project, rid: string, lang: Lang) {
   if (closed) { closed.status = closed.prevStatus && closed.prevStatus !== "Closed" ? closed.prevStatus : "Open"; return; }
   p.issues.push({
     id: nextId(p, "issues"), title: r.title + (lang === "da" ? " (er indtruffet)" : " (has occurred)"),
-    prio: sev(pScore(r)) === "high" ? "High" : "Medium", status: "Open", owner: r.owner, from: rid, auto: true, links: [...r.links],
+    prio: sev(pScore(r)) === "high" ? "High" : "Medium", status: "Open", owner: r.owner ?? r.owners[0], from: rid, auto: true, links: [...r.links],
   });
 }
 export const risksFor = (p: Project, sid: string) => p.risks.filter((r) => r.links.includes(sid));
@@ -128,3 +128,23 @@ export const piQuad = (s: { sc: Record<string, number> }) => {
   const P = (s.sc.power ?? 0) >= 3, I = (s.sc.interest ?? 0) >= 3;
   return P ? (I ? "hh" : "hl") : I ? "lh" : "ll";
 };
+
+/** A risk can have several owners and, optionally, one primary owner among
+ *  them. Older data had a single `owner`; it becomes the first owner. */
+export function syncOwners(r: Risk) {
+  const raw = (r as unknown as { owners?: unknown }).owners;
+  const list = Array.isArray(raw) ? raw.filter((x): x is string => typeof x === "string" && !!x) : [];
+  if (r.owner && !list.includes(r.owner)) list.unshift(r.owner);
+  r.owners = [...new Set(list)];
+  if (!r.owner) delete r.owner;
+}
+/** Owners first by primary, then in the order they were added. */
+export const ownersOf = (r: Risk) => (r.owner ? [r.owner, ...r.owners.filter((x) => x !== r.owner)] : r.owners);
+/** CSV cell: owner IDs separated by spaces, the primary one marked with *. */
+export const ownersCell = (r: Risk) => ownersOf(r).map((x) => (x === r.owner ? x + "*" : x)).join(" ");
+export function parseOwners(cell: string): { owners: string[]; owner?: string } {
+  const parts = cell.split(/[\s,;]+/).filter(Boolean);
+  const owners = parts.map((x) => x.replace(/\*$/, "")).filter(Boolean);
+  return { owners: [...new Set(owners)], owner: parts.find((x) => x.endsWith("*"))?.replace(/\*$/, "") || undefined };
+}
+export const ownerNames = (p: Project, r: Risk) => ownersOf(r).map((x) => titleOf(p, x) + (x === r.owner && r.owners.length > 1 ? " ★" : "")).join(", ");

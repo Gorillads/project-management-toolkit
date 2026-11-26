@@ -37,6 +37,9 @@ export interface Person extends BaseItem {
  *  overall impact sc.i is always the highest of the three. */
 export interface Risk extends BaseItem {
   cat: string;
+  /** Everyone who owns the risk (people). */
+  owners: string[];
+  /** Optional primary owner; when set it is one of `owners`. */
   owner?: string;
   mit: string;
   status: string;

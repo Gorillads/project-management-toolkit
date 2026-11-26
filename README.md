@@ -59,7 +59,10 @@ Every project starts with the **core**:
   cause, gets a nudge to describe what could cause it. The **quality
   triangle** places each risk towards the sides it threatens and shows the
   exposure per side. Every project type suggests risks as events with a cause
-  and a typical consequence.
+  and a typical consequence. A risk can have several owners; marking one as
+  the primary owner is optional (click the star, click again to clear). In
+  the CSV the owners share the Owner column, the primary marked `*` (e.g.
+  `P2* P4`).
 
 Everything else is an **add-on**, switched on from "Add tools" on the
 Overview when the project needs it: stakeholder analysis (12 dimensions,

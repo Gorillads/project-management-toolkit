@@ -556,3 +556,15 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
 .pu-node.root { max-width: 420px; }
 .pu-lines path.sub { stroke-dasharray: 4 3; stroke: var(--text-soft); }
 .pu-lines path.sub.on { stroke: var(--accent); }
+
+/* Risk owners: several, one optional primary */
+.owners-ed { display: flex; flex-direction: column; gap: 6px; }
+.owner-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.owner-list li { display: flex; align-items: center; gap: 6px; }
+.star-btn { border: 0; background: none; cursor: pointer; font-size: 16px; line-height: 1; padding: 2px; color: var(--muted, #888); }
+.star-btn[aria-pressed="true"] { color: #c58a00; }
+.owner-chips { display: inline-flex; flex-wrap: wrap; gap: 3px; }
+.owner-chip { display: inline-flex; align-items: center; gap: 2px; }
+.owner-chip .star { color: #c58a00; font-size: 12px; }
+.risk-table .owner-chip .link-chip { max-width: 112px; }
+.risk-table .owner-chip .link-chip > button:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -1,9 +1,9 @@
-import type { AnyItem, CollKey, Lang, Project } from "../model/types";
+import type { AnyItem, CollKey, Lang, Project, Risk } from "../model/types";
 import { t, tv } from "../i18n";
 import { tplById } from "../data/templates";
 import { repairProject } from "../state/store";
 import { syncCats } from "./categories";
-import { COLLS, openIssueOf, peopleFor, pScore, risksFor, score, sev, titleOf } from "./links";
+import { COLLS, openIssueOf, ownerNames, ownersCell, parseOwners, peopleFor, pScore, risksFor, score, sev, titleOf } from "./links";
 
 export function downloadBlob(data: Blob | string, filename: string, type = "text/plain") {
   const blob = typeof data === "string" ? new Blob([data], { type }) : data;
@@ -33,7 +33,7 @@ type Col = (typeof COLS)[number];
 const CSV_MAP: Record<string, Partial<Record<Col, string>>> = {
   stakeholders: { Category: "cat", Type: "type", Owner: "org", Text: "need" },
   people: { Category: "group", Type: "role", Owner: "stakeholder", Status: "org", Text: "resp", Date: "email" },
-  risks: { Category: "cat", Owner: "owner", Status: "status", Text: "mit", Cause: "cause", Consequence: "consequence" },
+  risks: { Category: "cat", Status: "status", Text: "mit", Cause: "cause", Consequence: "consequence" },
   issues: { Category: "prio", Type: "from", Owner: "owner", Status: "status" },
   decisions: { Category: "tpl", Owner: "by", Date: "date" },
   assumptions: { Type: "kind", Status: "status" },
@@ -60,6 +60,7 @@ export function projectCsv(p: Project): string {
       const r = it as unknown as Record<string, unknown>;
       const row: Record<Col, unknown> = { Register: c, ID: it.id, Title: it.title, Category: "", Type: "", Owner: "", Status: "", Date: "", Number: "", Text: "", Notes: it.notes ?? "", Scores: "", Links: it.links.join(" "), Serves: Array.isArray(r.serves) ? (r.serves as string[]).join(" ") : "", Cause: "", Consequence: "" };
       for (const [col, k] of Object.entries(m)) row[col as Col] = c === "milestones" && k === "done" ? (r.done ? "Done" : "Planned") : r[k as string] ?? "";
+      if (c === "risks") row.Owner = ownersCell(it as Risk);
       if ("sc" in r) row.Scores = Object.entries(r.sc as Record<string, number>).map(([k, v]) => `${k}=${v}`).join(", ");
       rows.push(COLS.map((k) => row[k]));
     }
@@ -127,7 +128,7 @@ export function importCsv(p: Project, text: string): { registers: string[]; rows
         it.sc = base;
       }
       if (c === "stakeholders") { it.type = it.type === "Internal" ? "Internal" : "External"; it.cat ??= ""; it.org ??= ""; it.need ??= ""; }
-      if (c === "risks") { it.cat ??= ""; it.status ??= "Open"; it.mit ??= ""; }
+      if (c === "risks") { Object.assign(it, parseOwners(get(r, "Owner"))); if (!it.owner) delete it.owner; it.cat ??= ""; it.status ??= "Open"; it.mit ??= ""; }
       if (c === "criteria") { it.target ??= ""; it.status ??= "Draft"; }
       if (c === "deliverables") it.status ??= "Draft";
       if (c === "tasks") it.col = ["todo", "doing", "done"].includes(it.col as string) ? it.col : "todo";
@@ -233,7 +234,7 @@ export async function buildDeck(p: Project, lang: Lang): Promise<Blob> {
     // @ts-expect-error see above
     s.addTable(rows, { ...tbl, x: 0.5, y: 1.5, w: 5.6, colW: [0.4, 1.04, 1.04, 1.04, 1.04, 1.04], rowH: 0.8 });
     const top: unknown[][] = [[th(T.id), th(T.title), th("Score"), th(T.owner)]];
-    [...rs].sort((a, b) => score(b, l.x, l.y) - score(a, l.x, l.y)).slice(0, 9).forEach((r) => { const v = score(r, l.x, l.y); const [bg, fg] = sevC(v); top.push([r.id + (openIssueOf(p, r.id) ? " ⚑" : ""), { text: [{ text: r.title, options: { breakLine: !!r.cause } }, ...(r.cause ? [{ text: `${T.tri.causeShort}: ${r.cause}`, options: { color: C.soft, fontSize: 8.5 } }] : [])] }, { text: String(v), options: { fill: { color: bg }, color: fg, bold: true, align: "center" } }, titleOf(p, r.owner)]); });
+    [...rs].sort((a, b) => score(b, l.x, l.y) - score(a, l.x, l.y)).slice(0, 9).forEach((r) => { const v = score(r, l.x, l.y); const [bg, fg] = sevC(v); top.push([r.id + (openIssueOf(p, r.id) ? " ⚑" : ""), { text: [{ text: r.title, options: { breakLine: !!r.cause } }, ...(r.cause ? [{ text: `${T.tri.causeShort}: ${r.cause}`, options: { color: C.soft, fontSize: 8.5 } }] : [])] }, { text: String(v), options: { fill: { color: bg }, color: fg, bold: true, align: "center" } }, ownerNames(p, r)]); });
     // @ts-expect-error see above
     s.addTable(top, { ...tbl, x: 6.5, y: 1.5, w: 6.3, colW: [0.6, 3.4, 0.7, 1.6], fontSize: 10 });
   }

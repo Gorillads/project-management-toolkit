@@ -26,7 +26,7 @@ export function readiness(p: Project): Step[] {
   const hasReason = (d: { serves: string[]; parent?: string }, depth = 0): boolean =>
     d.serves.length > 0 || (!!d.parent && depth < 20 && (() => { const par = p.deliverables.find((x) => x.id === d.parent); return !!par && hasReason(par, depth + 1); })());
   const reasoned = p.deliverables.filter((d) => hasReason(d));
-  const owned = p.risks.filter((r) => r.owner && r.mit.trim());
+  const owned = p.risks.filter((r) => r.owners.length > 0 && r.mit.trim());
   const caused = p.risks.filter((r) => (r.cause ?? "").trim() && Math.max(r.sc.fin ?? 0, r.sc.sched ?? 0, r.sc.res ?? 0) > 0);
   const linked = p.risks.filter((r) => r.links.some((id) => ["S", "P", "DL"].includes(kindOf(p, id))));
   const agreed = [...p.criteria, ...p.deliverables].filter((x) => x.status === "Agreed");

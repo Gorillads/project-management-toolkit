@@ -3,7 +3,7 @@ import type { Analysis, Lens, Person, Project, Risk, Stakeholder } from "../mode
 import { tv, type Dict } from "../i18n";
 import { RISK_STATUSES, TRIANGLE } from "../data/catalog";
 import { openIssueOf, peopleFor, pScore, risksFor, toggleIssue } from "../lib/links";
-import { AddRow, Backlinks, Chip, ItemEditor, ScoreSelect, Sev, ViewHead, rowClass, useApp, useGoto, type Field } from "../components/ui";
+import { AddRow, Backlinks, Chip, ItemEditor, OwnerChips, ScoreSelect, Sev, ViewHead, rowClass, useApp, useGoto, type Field } from "../components/ui";
 import { QualityTriangle, RiskHeat, StakeholderGrid } from "../components/Charts";
 import { looksLikeConsequence } from "../lib/riskText";
 import { groupOpts, opts } from "./Registers";
@@ -16,7 +16,7 @@ export const coreAnalysis = (p: Project, T: Dict): Analysis => ({
 });
 export const coreLens = (p: Project, T: Dict): Lens => ({ id: "core-pxi", name: T.riskMap, x: "i", y: "p", cats: [...new Set([...p.rCats, ...p.risks.map((r) => r.cat)])], sCat: "" });
 
-const ownedBy = (p: Project, pid: string) => p.risks.filter((r) => r.owner === pid || r.links.includes(pid));
+const ownedBy = (p: Project, pid: string) => p.risks.filter((r) => r.owners.includes(pid) || r.links.includes(pid));
 
 function RiskList({ risks }: { risks: Risk[] }) {
   const { T } = useApp();
@@ -170,7 +170,7 @@ export function RisksCoreView() {
     { k: "consequence", label: T.tri.consequenceText, type: "textarea" },
     { k: "cat", label: T.category, type: "select", options: groupOpts(p.rCats, lang) },
     { k: "status", label: T.status, type: "select", options: opts(RISK_STATUSES, lang) },
-    { k: "owner", label: T.owner, type: "ref", only: ["people"] },
+    { k: "owners", label: T.owners, type: "owners" },
     { k: "mit", label: T.mitigation, type: "textarea" },
     { k: "links", label: `${T.affects} (${T.actorsWord.toLowerCase()}, ${T.pu.deliverables.toLowerCase()})`, type: "links" },
     { k: "notes", label: T.notes, type: "textarea" },
@@ -182,7 +182,7 @@ export function RisksCoreView() {
       <ViewHead id="risks" />
       <div className="card add-card">
         <AddRow coll="risks" label={T.addRiskBtn} namePh={T.riskPh} onAdd={(id, title) => {
-          update((d) => { d.risks.push({ id, title, cat: "", cause: "", consequence: "", mit: "", status: "Open", links: [], sc: { ...Object.fromEntries(d.rDims.map((x) => [x.id, 3])), fin: 0, sched: 0, res: 0 } }); });
+          update((d) => { d.risks.push({ id, title, cat: "", cause: "", consequence: "", mit: "", status: "Open", owners: [], links: [], sc: { ...Object.fromEntries(d.rDims.map((x) => [x.id, 3])), fin: 0, sched: 0, res: 0 } }); });
           pick(id);
         }} />
         <details className="cat-details">
@@ -196,7 +196,7 @@ export function RisksCoreView() {
           {sorted.length === 0 ? <div className="empty">{T.noRisksYet}</div> : (
             <div className="scroll-x"><table className="risk-table">
               <thead>
-                <tr><th rowSpan={2}>{T.idLabel}</th><th rowSpan={2}>{T.tri.whatHappens}</th><th rowSpan={2}>{T.probability}</th><th colSpan={3} className="center tri-head">{T.tri.consequence}</th><th rowSpan={2} title={T.tri.scoreHint}>Score</th>{issues && <th rowSpan={2}>{T.issueFlag}</th>}<th rowSpan={2}>{T.owner}</th></tr>
+                <tr><th rowSpan={2}>{T.idLabel}</th><th rowSpan={2}>{T.tri.whatHappens}</th><th rowSpan={2}>{T.probability}</th><th colSpan={3} className="center tri-head">{T.tri.consequence}</th><th rowSpan={2} title={T.tri.scoreHint}>Score</th>{issues && <th rowSpan={2}>{T.issueFlag}</th>}<th rowSpan={2}>{T.owners}</th></tr>
                 <tr>{TRIANGLE.map((t) => <th key={t.key} className="center">{t[lang]}</th>)}</tr>
               </thead>
               <tbody>{sorted.map((r) => {
@@ -211,7 +211,7 @@ export function RisksCoreView() {
                     {tri(r)}
                     <td><Sev s={pScore(r)} /></td>
                     {issues && <td><button type="button" className="issue-tg" aria-pressed={!!iss} onClick={(e) => { e.stopPropagation(); update((d) => toggleIssue(d, r.id, lang)); }}>⚑{iss ? " " + iss.id : ""}</button></td>}
-                    <td>{r.owner && <Chip id={r.owner} />}</td>
+                    <td><OwnerChips risk={r} /></td>
                   </tr>
                 );
               })}</tbody>

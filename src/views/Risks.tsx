@@ -30,7 +30,7 @@ function Detail({ r, lens }: { r: Risk; lens?: Lens }) {
     { k: "consequence", label: T.tri.consequenceText, type: "textarea" },
     { k: "cat", label: T.category, type: "select", options: groupOpts(p.rCats, lang) },
     { k: "status", label: T.status, type: "select", options: opts(RISK_STATUSES, lang) },
-    { k: "owner", label: T.owner, type: "ref", only: ["people"] },
+    { k: "owners", label: T.owners, type: "owners" },
     { k: "mit", label: T.mitigation, type: "textarea" },
     { k: "notes", label: T.notes, type: "textarea" },
     { k: "links", label: T.links, type: "links" },
@@ -98,7 +98,7 @@ export function RisksView() {
   const pick = (id: string) => setUi({ sel: { ...ui.sel, risks: id }, flash: undefined });
   const add = () => {
     const id = nextId(p, "risks");
-    update((pp) => { pp.risks.push({ id, title: "", cat: "", cause: "", consequence: "", mit: "", status: "Open", links: [], sc: { ...Object.fromEntries(pp.rDims.map((d) => [d.id, 3])), fin: 0, sched: 0, res: 0 } }); });
+    update((pp) => { pp.risks.push({ id, title: "", cat: "", cause: "", consequence: "", mit: "", status: "Open", owners: [], links: [], sc: { ...Object.fromEntries(pp.rDims.map((d) => [d.id, 3])), fin: 0, sched: 0, res: 0 } }); });
     pick(id);
   };
   const pin = (id: string) => update((pp) => { const x = pp.lenses.find((y) => y.id === id)!; x.pinned = !x.pinned; });

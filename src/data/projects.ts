@@ -44,7 +44,7 @@ export function projectFromTemplate(templateId: string, lang: Lang, name?: strin
     id: `S${i + 1}`, title: n[lang], cat, type, org: "", need: "", links: [], sc: scoreAll(DEFAULT_S_DIMS),
   }));
   const risks: Risk[] = tpl.risks.map(([n, cat, cause, [fin, sched, res]], i) => ({
-    id: `R${i + 1}`, title: n[lang], cat, cause: cause[lang], consequence: "", mit: "", status: "Open", links: [], sc: { ...scoreAll(DEFAULT_R_DIMS), fin, sched, res },
+    id: `R${i + 1}`, title: n[lang], cat, cause: cause[lang], consequence: "", mit: "", status: "Open", owners: [], links: [], sc: { ...scoreAll(DEFAULT_R_DIMS), fin, sched, res },
   }));
   return {
     id: uid("prj"),
@@ -125,7 +125,11 @@ export function exampleProject(): Project {
     ["R11", "3PL label API not ready", "Technical", ["S15", "S2"], "P7", "Manual label fallback for 4 weeks", "Open", [3, 3, 2, 4, 2, 2, 3, 2, 4]],
     ["R12", "Key accounts leave after delivery errors", "Commercial", ["S10", "S5"], "P6", "Account managers call top 20 in go-live week", "Open", [2, 4, 4, 1, 5, 2, 1, 4, 3]],
     ["R13", "Owners demand cost cuts mid-project", "Financial", ["S6", "S7"], "P10", "Quarterly benefits report to the board", "Watching", [2, 4, 4, 3, 1, 2, 2, 2, 5]],
-  ] as [string, string, string, string[], string, string, string, number[]][]).map(([id, title, cat, links, owner, mit, status, sc]) => ({ id, title, cat, links, owner, mit, status, sc: rd(sc) }));
+  ] as [string, string, string, string[], string, string, string, number[]][]).map(([id, title, cat, links, owner, mit, status, sc]) => ({ id, title, cat, links, owners: [owner], owner, mit, status, sc: rd(sc) }));
+  // Some risks are shared: data migration has a primary owner and a second
+  // owner from finance; invoicing is shared with no one in charge.
+  const shared: Record<string, [string[], string | undefined]> = { R4: [["P2", "P4"], "P2"], R6: [["P4", "P6"], undefined], R10: [["P9", "P1"], "P9"] };
+  for (const r of R) { const s = shared[r.id]; if (s) { r.owners = s[0]; r.owner = s[1]; } }
 
   // Why each risk could happen, and how hard it would hit resources (price
   // and time come from the scores above).
