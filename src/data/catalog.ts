@@ -41,6 +41,7 @@ export const TASK_COLS = ["todo", "doing", "done"];
 /** While a project is being developed, criteria and deliverables are
  *  shaped and agreed, not yet tracked. Progress states come with the
  *  later project-management phase. */
+export const DECISION_STATUSES = ["Open", "Decided"];
 export const CRITERION_STATUSES = ["Draft", "Agreed"];
 export const DELIVERABLE_STATUSES = ["Draft", "Agreed"];
 /** Statuses from earlier versions, read as the nearest shaping state. */

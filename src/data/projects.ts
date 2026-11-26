@@ -174,10 +174,11 @@ export function exampleProject(): Project {
       { id: "I4", title: "Vendor invoices 12 extra configuration days", prio: "Medium", status: "Escalated", owner: "P1", from: "R5", links: ["S14", "D3"] },
     ],
     decisions: [
-      { id: "D1", title: "Phased go-live: finance first, warehouse 4 weeks later", date: "2026-10-02", by: "P9", links: ["R3", "R6", "M5"], tpl: "Big bang or phased go-live" },
-      { id: "D2", title: "Keep webshop on CSV export until Q3", date: "2026-10-21", by: "P2", links: ["R8", "S12"], tpl: "Which integrations go live on day one" },
-      { id: "D3", title: "Approve 12 extra vendor days from contingency", date: "2026-11-12", by: "P9", links: ["R5", "C2"] },
-      { id: "D4", title: "Brief works council before scanner rollout", date: "2026-11-18", by: "P10", links: ["R7", "S16"] },
+      { id: "D1", title: "Big bang or phased go-live?", status: "Decided", choice: "Phased go-live: finance first, warehouse 4 weeks later", why: "Spreads the load on key users and keeps invoicing running if the warehouse slips. Big bang was cheaper but put month-end close at risk.", date: "2026-10-02", by: "P9", links: ["R3", "R6", "M5"], tpl: "Big bang or phased go-live" },
+      { id: "D2", title: "Which integrations go live on day one?", status: "Decided", choice: "Keep the webshop on CSV export until Q3", why: "The webshop API is undocumented; a CSV bridge removes it from the critical path.", date: "2026-10-21", by: "P2", links: ["R8", "S12"], tpl: "Which integrations go live on day one" },
+      { id: "D3", title: "Pay for 12 extra vendor days?", status: "Decided", choice: "Approved from contingency", why: "Cheaper than slipping configuration complete.", date: "2026-11-12", by: "P9", links: ["R5", "C2"] },
+      { id: "D4", title: "When to involve the works council?", status: "Decided", choice: "Brief them before the scanner rollout", why: "Scanner logging touches employee monitoring rules.", date: "2026-11-18", by: "P10", links: ["R7", "S16"] },
+      { id: "D5", title: "Which data to migrate or archive?", status: "Open", date: "", links: ["R4", "SC2"], tpl: "Which data to migrate or archive" },
     ],
     assumptions: [
       { id: "A1", kind: "Assumption", title: "Vendor keeps the same consultant team", status: "Unverified", links: ["R1", "S14"] },

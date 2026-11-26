@@ -99,7 +99,7 @@ export const Sev = ({ s }: { s: number }) => {
   const k = s >= 15 ? "high" : s >= 8 ? "med" : "low";
   return <span className={"badge sev " + k}>{T[k as "high"]} · {s}</span>;
 };
-const STATUS_TONE: Record<string, string> = { Open: "med", "In progress": "med", Escalated: "high", Closed: "low", Approved: "low", Rejected: "high", "Under review": "med", Confirmed: "low", Unverified: "med", "At risk": "high", "In talks": "med", Broken: "high", High: "high", Medium: "med", Low: "low", Mitigating: "med", Watching: "low" };
+const STATUS_TONE: Record<string, string> = { Open: "med", "In progress": "med", Escalated: "high", Closed: "low", Approved: "low", Rejected: "high", "Under review": "med", Confirmed: "low", Unverified: "med", "At risk": "high", "In talks": "med", Broken: "high", High: "high", Medium: "med", Low: "low", Mitigating: "med", Watching: "low", Decided: "low" };
 export const Status = ({ v }: { v: string }) => {
   const { lang } = useApp();
   const tone = STATUS_TONE[v];

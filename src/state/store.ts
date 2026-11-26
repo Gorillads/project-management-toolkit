@@ -120,6 +120,7 @@ export function repairProject(p: Project): Project {
   for (const r of p.risks) { r.sc ??= {}; r.sc.res ??= 0; r.sc.fin ??= 0; r.sc.sched ??= 0; if (typeof r.cause !== "string") r.cause = ""; if (typeof r.consequence !== "string") r.consequence = ""; syncOwners(r); }
   flattenGoals(p);
   syncImpact(p);
+  for (const d of p.decisions) { if (d.status !== "Open" && d.status !== "Decided") d.status = "Decided"; if (typeof d.date !== "string") d.date = ""; }
   syncCats(p);
   return p;
 }

@@ -33,7 +33,7 @@ export function useSummaries() {
     stakeholders: [`${p.stakeholders.length} ${T.stakeholdersWord.toLowerCase()}`, `${p.stakeholders.filter((x) => x.type === "Internal").length} ${T.internal.toLowerCase()}, ${p.stakeholders.filter((x) => x.type === "External").length} ${T.external.toLowerCase()} · ${p.analyses.length} ${T.analysis.toLowerCase()}`],
     risks: [`${p.risks.length} ${T.tools.risks.toLowerCase()}, ${high} ${T.statHigh}`, `${p.risks.filter((r) => openIssueOf(p, r.id)).length} ⚑ · ${p.assumptions.length} ${T.assumptions.toLowerCase()}`],
     issues: [`${open.length} ${da ? "åbne" : "open"}`, `${open.filter((i) => i.prio === "High").length} ${T.high.toLowerCase()}`],
-    decisions: [`${p.decisions.length} ${da ? "beslutninger" : "decisions"}`, `${Math.max(0, tpl.decisions.length - decidedTpl)} ${da ? "typiske forude" : "typical still ahead"}`],
+    decisions: [`${p.decisions.filter((d) => d.status === "Open").length} ${da ? "åbne" : "open"} · ${p.decisions.filter((d) => d.status !== "Open").length} ${da ? "besluttet" : "decided"}`, `${Math.max(0, tpl.decisions.length - decidedTpl)} ${da ? "typiske forude" : "typical still ahead"}`],
     changes: [`${p.changes.length}`, `${p.changes.filter((c) => c.status === "Under review").length} ${tv(lang, "Under review").toLowerCase()}`],
     wbs: [`${p.wbs.length} ${da ? "arbejdspakker" : "work packages"}`, `${p.wbs.length ? Math.round(p.wbs.reduce((a, w) => a + (w.progress ?? 0), 0) / p.wbs.length) : 0}% ${da ? "i snit" : "on average"}`],
     schedule: [next ? next.title : T.empty, next ? `${da ? "om" : "in"} ${days} ${da ? "dage" : "days"} · ${p.milestones.filter((m) => m.done).length}/${p.milestones.length}` : ""],

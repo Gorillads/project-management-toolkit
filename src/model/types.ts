@@ -55,10 +55,16 @@ export interface Issue extends BaseItem {
   auto?: boolean;
   prevStatus?: string;
 }
+/** A decision the project needs or has made. While it is Open the title
+ *  is the question; once Decided, `choice` says what was chosen and `why`
+ *  the reasons (options considered, trade-offs). */
 export interface Decision extends BaseItem {
   date: string;
   by?: string;
   tpl?: string;
+  status?: string;
+  choice?: string;
+  why?: string;
 }
 export interface Assumption extends BaseItem {
   kind: string;
