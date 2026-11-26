@@ -17,10 +17,8 @@ export interface Step {
  *  why it exists, how success is known, what it delivers, who is involved,
  *  and what could go wrong. */
 export function readiness(p: Project): Step[] {
-  const tops = p.goals.filter((g) => !g.parent || !p.goals.some((x) => x.id === g.parent));
-  const goalScope = (id: string): string[] => [id, ...p.goals.filter((g) => g.parent === id).flatMap((g) => goalScope(g.id))];
+  const tops = p.goals.slice(0, 1);
   const critScope = (id: string): string[] => [id, ...p.criteria.filter((c) => c.parent === id).flatMap((c) => critScope(c.id))];
-  const measured = p.goals.filter((g) => p.criteria.some((c) => c.serves.some((s) => goalScope(g.id).includes(s))));
   const withTarget = p.criteria.filter((c) => c.target.trim());
   const delivered = p.criteria.filter((c) => p.deliverables.some((d) => d.serves.some((s) => critScope(c.id).includes(s))));
   const hasReason = (d: { serves: string[]; parent?: string }, depth = 0): boolean =>
@@ -35,8 +33,7 @@ export function readiness(p: Project): Step[] {
     ({ key, done: all.length > 0 && ok.length === all.length, have: ok.length, of: all.length, view, sel: first(all, ok) });
   return [
     { key: "purpose", done: tops.length > 0 && !!tops[0].title.trim(), view: "purpose", sel: tops[0]?.id },
-    { key: "goals", done: p.goals.some((g) => g.parent && tops.some((t) => t.id === g.parent)), view: "purpose", sel: tops[0]?.id },
-    every("measured", p.goals, measured, "purpose"),
+    { key: "measured", done: tops.length > 0 && p.criteria.length > 0, have: p.criteria.length, view: "purpose", sel: tops[0]?.id },
     every("targets", p.criteria, withTarget, "purpose"),
     every("delivered", p.criteria, delivered, "purpose"),
     every("reasoned", p.deliverables, reasoned, "purpose"),

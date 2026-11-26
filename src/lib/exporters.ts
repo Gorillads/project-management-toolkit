@@ -182,7 +182,7 @@ export async function buildDeck(p: Project, lang: Lang): Promise<Blob> {
 
   // the why/how hierarchy
   if (p.goals.length || p.criteria.length || p.deliverables.length) {
-    const top = p.goals.find((g) => !g.parent || !p.goals.some((x) => x.id === g.parent));
+    const top = p.goals[0];
     s = base(T.tools.purpose, top ? `${T.pu.purpose}: ${top.title}` : undefined);
     const col = (title: string, rows: { id: string; title: string; serves?: string[]; parent?: string; extra?: string }[], x: number) => {
       const r: unknown[][] = [[th(title)]];
@@ -192,11 +192,10 @@ export async function buildDeck(p: Project, lang: Lang): Promise<Blob> {
         { text: [it.parent ? `${T.pu.under} ${it.parent}` : "", it.serves?.length ? `→ ${it.serves.join(", ")}` : "", it.extra ?? ""].filter(Boolean).join(" · "), options: { color: C.soft, fontSize: 9 } },
       ] }]));
       // @ts-expect-error see above
-      s.addTable(r, { ...tbl, x, y: 1.5, w: 4, fontSize: 10.5, valign: "top" });
+      s.addTable(r, { ...tbl, x, y: 1.5, w: 6, fontSize: 10.5, valign: "top" });
     };
-    col(T.pu.goals, p.goals.map((g) => ({ id: g.id, title: g.title, parent: g.parent })), 0.5);
-    col(T.pu.criteria, p.criteria.map((c) => ({ id: c.id, title: c.title, parent: c.parent, serves: c.serves, extra: [c.target, tv(lang, c.status)].filter(Boolean).join(" · ") })), 4.67);
-    col(T.pu.deliverables, p.deliverables.map((d) => ({ id: d.id, title: d.title, parent: d.parent, serves: d.serves, extra: [titleOf(p, d.owner), d.due, tv(lang, d.status)].filter(Boolean).join(" · ") })), 8.83);
+    col(T.pu.criteria, p.criteria.map((c) => ({ id: c.id, title: c.title, parent: c.parent, extra: [c.target, tv(lang, c.status)].filter(Boolean).join(" · ") })), 0.5);
+    col(T.pu.deliverables, p.deliverables.map((d) => ({ id: d.id, title: d.title, parent: d.parent, serves: d.serves, extra: [titleOf(p, d.owner), d.due, tv(lang, d.status)].filter(Boolean).join(" · ") })), 6.83);
   }
 
   s = base(T.stakeholdersWord, `${p.stakeholders.filter((x) => x.type === "Internal").length} ${T.internal.toLowerCase()} · ${p.stakeholders.filter((x) => x.type === "External").length} ${T.external.toLowerCase()}`);

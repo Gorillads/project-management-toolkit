@@ -4,14 +4,15 @@ import type { Criterion, Deliverable, Goal, Project } from "../model/types";
 import { tv, type Dict } from "../i18n";
 import { CRITERION_STATUSES, DELIVERABLE_STATUSES } from "../data/catalog";
 import { AddRow, ItemEditor, ViewHead, useApp, type Field } from "../components/ui";
+import { placeItem, shiftItem, tidy, type Place } from "../lib/structure";
 import { opts } from "./Registers";
 
 type Item = { id: string; parent?: string };
 
 /** Items of one level as a forest: top-level items (no parent on this
- *  level) and, under each, its sub-items. `rank` orders the top level so
- *  lines between the bands cross as little as possible. */
-function forest<T extends Item>(items: T[], rank: (x: T) => number) {
+ *  level) and, under each, its sub-items, in the order of the list (which
+ *  the user can change by moving items). */
+function forest<T extends Item>(items: T[]) {
   const ids = new Set(items.map((x) => x.id));
   const kids = new Map<string, T[]>();
   const tops: T[] = [];
@@ -24,11 +25,11 @@ function forest<T extends Item>(items: T[], rank: (x: T) => number) {
   const walk = (x: T) => { if (reach.has(x.id)) return; reach.add(x.id); (kids.get(x.id) ?? []).forEach(walk); };
   tops.forEach(walk);
   for (const x of items) if (!reach.has(x.id)) { tops.push(x); walk(x); }
-  return { tops: [...tops].sort((a, b) => rank(a) - rank(b)), kids };
+  return { tops, kids };
 }
 
-/** The purpose: the goal (or goals) with no parent. There should be one. */
-export const purposes = (p: Project) => p.goals.filter((g) => !g.parent || !p.goals.some((x) => x.id === g.parent));
+/** The purpose: the one top item, stored as the project's only goal. */
+export const purposes = (p: Project) => p.goals.slice(0, 1);
 
 /** Everything above and below an item: what it serves (why) and what
  *  delivers it (how), following parents and `serves` links. */
@@ -54,17 +55,11 @@ export function gaps(p: Project, T: Dict): { id: string; text: string }[] {
   const out: { id: string; text: string }[] = [];
   const tops = purposes(p);
   if (!tops.length) out.push({ id: "", text: T.pu.gapPurpose });
-  tops.slice(1).forEach((g) => out.push({ id: g.id, text: T.pu.gapManyPurposes }));
-  const subGoals = (id: string): string[] => p.goals.filter((g) => g.parent === id).flatMap((g) => [g.id, ...subGoals(g.id)]);
-  for (const g of p.goals) {
-    const scope = [g.id, ...subGoals(g.id)];
-    if (!p.criteria.some((c) => c.serves.some((s) => scope.includes(s)))) out.push({ id: g.id, text: T.pu.gapGoal });
-  }
+  if (tops.length && !p.criteria.length) out.push({ id: tops[0].id, text: T.pu.gapGoal });
   const hasReason = (x: { serves: string[]; parent?: string }, list: { id: string; serves: string[]; parent?: string }[], depth = 0): boolean =>
     x.serves.length > 0 || (!!x.parent && depth < 20 && (() => { const par = list.find((y) => y.id === x.parent); return !!par && hasReason(par, list, depth + 1); })());
   const subCrit = (id: string): string[] => p.criteria.filter((c) => c.parent === id).flatMap((c) => [c.id, ...subCrit(c.id)]);
   for (const c of p.criteria) {
-    if (!hasReason(c, p.criteria)) out.push({ id: c.id, text: T.pu.gapCritUp });
     const scope = [c.id, ...subCrit(c.id)];
     if (!p.deliverables.some((d) => d.serves.some((s) => scope.includes(s)))) out.push({ id: c.id, text: T.pu.gapCritDown });
   }
@@ -103,14 +98,67 @@ export function PurposeView() {
   const tops = purposes(p);
   const isPurpose = (g: Goal) => tops.includes(g);
 
-  // Order each band's top level by what it serves, so lines cross less.
-  const order = new Map<string, number>();
-  const gF = forest(p.goals, () => 0);
-  const number = (f: { tops: Item[]; kids: Map<string, Item[]> }) => { let i = 0; const w = (x: Item) => { order.set(x.id, i++); (f.kids.get(x.id) ?? []).forEach(w); }; f.tops.forEach(w); };
-  number(gF);
-  const cF = forest(p.criteria, (c) => Math.min(...c.serves.map((s) => order.get(s) ?? 999), 999));
-  number(cF);
-  const dF = forest(p.deliverables, (d) => Math.min(...d.serves.map((s) => order.get(s) ?? 999), 999));
+  const cF = forest(p.criteria);
+  const dF = forest(p.deliverables);
+  const purpose = tops[0];
+
+  // Moving items by drag and drop. Dropping on the left or right edge of an
+  // item on the same level puts it beside that item; in the middle puts it
+  // under it. A criterion dropped on the purpose goes to the top level; a
+  // deliverable dropped on a criterion counts towards it.
+  const kindOfId = (id: string) => (p.criteria.some((x) => x.id === id) ? "crit" : p.deliverables.some((x) => x.id === id) ? "del" : p.goals.some((x) => x.id === id) ? "goal" : "");
+  const [drag, setDrag] = useState<string | null>(null);
+  const dragRef = useRef<string | null>(null);
+  const [hint, setHint] = useState<{ id: string; zone: "before" | "after" | "into" | "link" } | null>(null);
+  const zoneFor = (dragged: string, target: string, e: React.DragEvent) => {
+    const a = kindOfId(dragged), b = kindOfId(target);
+    if (a === b) {
+      const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width;
+      return x < 0.3 ? "before" : x > 0.7 ? "after" : "into";
+    }
+    if ((a === "crit" && b === "goal") || (a === "del" && b === "crit")) return "link";
+    return null;
+  };
+  const applyDrop = (dragged: string, target: string | null, zone: "before" | "after" | "into" | "link" | "top") => {
+    const k = kindOfId(dragged);
+    update((d) => {
+      const list = (k === "crit" ? d.criteria : d.deliverables) as Item[];
+      if (zone === "top" || (zone === "link" && k === "crit")) placeItem(list, dragged, { kind: "top" });
+      else if (zone === "link") { const it = d.deliverables.find((x) => x.id === dragged); if (it && target && !it.serves.includes(target)) it.serves.push(target); }
+      else if (target) placeItem(list, dragged, { kind: zone, target } as Place);
+    });
+    select(dragged);
+  };
+  const dnd = (id: string) => {
+    const k = kindOfId(id);
+    return {
+      draggable: k === "crit" || k === "del",
+      onDragStart: (e: React.DragEvent) => { e.stopPropagation(); dragRef.current = id; e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", id); setTimeout(() => setDrag(id), 0); },
+      onDragEnd: () => { dragRef.current = null; setDrag(null); setHint(null); },
+      onDragOver: (e: React.DragEvent) => {
+        const from = dragRef.current;
+        if (!from || from === id) return;
+        const z = zoneFor(from, id, e);
+        if (!z) return;
+        e.preventDefault(); e.stopPropagation();
+        if (hint?.id !== id || hint.zone !== z) setHint({ id, zone: z });
+      },
+      onDragLeave: () => setHint((h) => (h?.id === id ? null : h)),
+      onDrop: (e: React.DragEvent) => {
+        const from = dragRef.current;
+        if (!from) return;
+        const z = zoneFor(from, id, e);
+        e.preventDefault(); e.stopPropagation();
+        dragRef.current = null; setDrag(null); setHint(null);
+        if (z) applyDrop(from, id, z);
+      },
+    };
+  };
+  const bandDrop = (kind: "crit" | "del") => ({
+    onDragOver: (e: React.DragEvent) => { if (dragRef.current && kindOfId(dragRef.current) === kind) { e.preventDefault(); if (hint?.id !== "band-" + kind) setHint({ id: "band-" + kind, zone: "into" }); } },
+    onDrop: (e: React.DragEvent) => { const from = dragRef.current; if (!from || kindOfId(from) !== kind) return; e.preventDefault(); dragRef.current = null; setDrag(null); setHint(null); applyDrop(from, null, "top"); },
+  });
 
   const found = useMemo(() => gaps(p, T), [p, T]);
   const gapIds = new Set(found.map((g) => g.id));
@@ -124,11 +172,10 @@ export function PurposeView() {
   const [lines, setLines] = useState<{ a: string; b: string; d: string; sub: boolean }[]>([]);
   const edges = useMemo(() => {
     const e: [string, string, boolean][] = [];
-    for (const g of p.goals) if (g.parent) e.push([g.id, g.parent, true]);
     for (const c of p.criteria) { c.serves.forEach((s) => e.push([c.id, s, false])); if (c.parent) e.push([c.id, c.parent, true]); }
     for (const d of p.deliverables) { d.serves.forEach((s) => e.push([d.id, s, false])); if (d.parent) e.push([d.id, d.parent, true]); }
     return e;
-  }, [p.goals, p.criteria, p.deliverables]);
+  }, [p.criteria, p.deliverables]);
   const measure = useCallback(() => {
     const root = box.current;
     if (!root) return;
@@ -154,19 +201,21 @@ export function PurposeView() {
   }, [measure, p, lang]);
 
   const ref = (id: string) => (el: HTMLElement | null) => { if (el) els.current.set(id, el); else els.current.delete(id); };
-  const nodeCls = (id: string, shape: string, depth: number) => `pu-node ${shape}` + (depth ? " sub" : "") + (sel === id ? " selected" : "") + (isLit(id) ? "" : " dim") + (gapIds.has(id) ? " gap" : "");
+  const nodeCls = (id: string, shape: string, depth: number) => `pu-node ${shape}` + (depth ? " sub" : "") + (sel === id ? " selected" : "") + (isLit(id) ? "" : " dim") + (gapIds.has(id) ? " gap" : "")
+    + (drag === id ? " dragging" : "") + (hint?.id === id ? " drop-" + hint.zone : "");
   const person = (id?: string) => (id ? p.people.find((x) => x.id === id)?.title : "");
 
   const node = (kind: "goal" | "crit" | "del", it: Goal | Criterion | Deliverable, depth: number) => {
     const purpose = kind === "goal" && isPurpose(it as Goal);
     return (
-      <button type="button" ref={ref(it.id)} className={nodeCls(it.id, purpose ? "root" : kind, depth)} onClick={() => pick(it.id)} title={it.title}>
+      <div role="button" tabIndex={0} ref={ref(it.id)} className={nodeCls(it.id, purpose ? "root" : kind, depth)} onClick={() => pick(it.id)} title={it.title}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(it.id); } }} {...dnd(it.id)}>
         <span className={purpose ? "pu-kind" : "id"}>{purpose ? `${U.purpose} · ${it.id}` : it.id}</span>
         <span className="pu-t">{it.title || "…"}</span>
         {kind === "crit" && (it as Criterion).target && <span className="pu-meta">{(it as Criterion).target}</span>}
         {kind === "del" && <span className="pu-meta">{[person((it as Deliverable).owner), (it as Deliverable).due].filter(Boolean).join(" · ")}</span>}
         {kind !== "goal" && <span className={"pu-status s-" + (it as Criterion).status.replace(/\s+/g, "-").toLowerCase()}>{tv(lang, (it as Criterion).status)}</span>}
-      </button>
+      </div>
     );
   };
   /** An item with its sub-items laid out directly below it. */
@@ -188,17 +237,14 @@ export function PurposeView() {
 
   // Adding follows the selection: under a selected item on the same level,
   // or for the selected item on the level above.
-  const goalParent = selGoal?.id ?? tops[0]?.id;
-  const critFor = selGoal?.id ?? (selCrit ? undefined : tops[0]?.id);
   const critParent = selCrit?.id;
   const delFor = selCrit?.id;
   const delParent = selDel?.id;
-  const goalLabel = !tops.length ? U.addPurpose : `${U.addSubGoal} ${U.under} “${title(goalParent!)}”`;
-  const critLabel = critParent ? `${U.addSubCriterion} ${U.under} “${title(critParent)}”` : U.addCriterion + (critFor ? ` ${U.forSel} “${title(critFor)}”` : "");
+  const critLabel = critParent ? `${U.addSubCriterion} ${U.under} “${title(critParent)}”` : U.addCriterion;
   const delLabel = delParent ? `${U.addSubDeliverable} ${U.under} “${title(delParent)}”` : U.addDeliverable + (delFor ? ` ${U.forSel} “${title(delFor)}”` : "");
 
   // Nearest level first: criteria, then goals, then the purpose (or the other way down).
-  const levelOf = (id: string) => (p.goals.some((x) => x.id === id) ? (tops.some((t) => t.id === id) ? 3 : 2) : p.criteria.some((x) => x.id === id) ? 1 : 0);
+  const levelOf = (id: string) => (p.goals.some((x) => x.id === id) ? 2 : p.criteria.some((x) => x.id === id) ? 1 : 0);
   const chainList = (ids: Set<string>, emptyText: string, upward = true) => {
     const list = [...ids].filter((x) => x !== sel).sort((a, b) => (upward ? levelOf(a) - levelOf(b) : levelOf(b) - levelOf(a)) || a.localeCompare(b, undefined, { numeric: true }));
     return list.length ? <div className="chips">{list.map((x) => <button key={x} type="button" className="pill" onClick={() => select(x)}><span className="id">{x} </span>{title(x)}</button>)}</div> : <div className="empty">{emptyText}</div>;
@@ -209,17 +255,33 @@ export function PurposeView() {
       <div><div className="sub-h m0">↓ {U.howChain}</div>{chainList(lit.down, U.nothingYet, false)}</div>
     </div>
   );
-  const goalOptions = () => p.goals.map((g) => ({ id: g.id, title: g.title, tag: isPurpose(g) ? U.purpose : undefined }));
+  /** Move the selected item among its siblings or out to the top level. */
+  const position = (coll: "criteria" | "deliverables", it: Criterion | Deliverable) => {
+    const list = p[coll] as Item[];
+    const ids = new Set(list.map((x) => x.id));
+    const par = (x: Item) => (x.parent && ids.has(x.parent) ? x.parent : undefined);
+    const sib = list.filter((x) => par(x) === par(it));
+    const k = sib.findIndex((x) => x.id === it.id);
+    return (
+      <div className="field-row">
+        <span className="lbl-like">{U.position}</span>
+        <div className="row-gap">
+          <button type="button" className="btn ghost small" disabled={k <= 0} onClick={() => update((d) => { shiftItem(d[coll] as Item[], it.id, -1); })}>← {U.moveLeft}</button>
+          <button type="button" className="btn ghost small" disabled={k >= sib.length - 1} onClick={() => update((d) => { shiftItem(d[coll] as Item[], it.id, 1); })}>{U.moveRight} →</button>
+          {par(it) && <button type="button" className="btn ghost small" onClick={() => update((d) => { placeItem(d[coll] as Item[], it.id, { kind: "top" }); })}>↑ {U.toTop}</button>}
+        </div>
+      </div>
+    );
+  };
 
   let editor: ReactNode = <div className="empty">{U.guide}</div>;
   if (selGoal) {
     const fields: Field[] = [
-      { k: "title", label: isPurpose(selGoal) ? U.purpose : T.title, type: "textarea" },
-      { k: "parent", label: U.parentGoal, type: "ref", only: ["goals"] },
+      { k: "title", label: U.purpose, type: "textarea" },
       { k: "notes", label: T.notes, type: "textarea" },
       { k: "links", label: T.links, type: "links" },
     ];
-    editor = <div className="detail"><div><span className="id">{selGoal.id} · {isPurpose(selGoal) ? U.purpose : U.goals}</span><h4>{selGoal.title || "…"}</h4></div>{chainBox}<ItemEditor coll="goals" item={selGoal} fields={fields} /></div>;
+    editor = <div className="detail"><div><span className="id">{selGoal.id} · {U.purpose}</span><h4>{selGoal.title || "…"}</h4></div>{chainBox}<ItemEditor coll="goals" item={selGoal} fields={fields} /></div>;
   } else if (selCrit) {
     const fields: Field[] = [
       { k: "title", label: T.title, type: "text" },
@@ -234,7 +296,7 @@ export function PurposeView() {
       <div className="detail">
         <div><span className="id">{selCrit.id} · {U.criteria}</span><h4>{selCrit.title || "…"}</h4></div>
         {chainBox}
-        <Serves id={selCrit.id} coll="criteria" serves={selCrit.serves} label={U.servesGoals} options={goalOptions()} />
+        {position("criteria", selCrit)}
         <ItemEditor coll="criteria" item={selCrit} fields={fields} />
       </div>
     );
@@ -253,6 +315,7 @@ export function PurposeView() {
         <div><span className="id">{selDel.id} · {U.deliverables}</span><h4>{selDel.title || "…"}</h4></div>
         {chainBox}
         <Serves id={selDel.id} coll="deliverables" serves={selDel.serves} label={U.servesCriteria} options={p.criteria.map((c) => ({ id: c.id, title: c.title }))} />
+        {position("deliverables", selDel)}
         <ItemEditor coll="deliverables" item={selDel} fields={fields} />
       </div>
     );
@@ -270,8 +333,8 @@ export function PurposeView() {
       <p className="muted small m0">{U.exHint}</p>
     </div>
   );
-  const band = (label: string, cls: string, children: ReactNode) => (
-    <div className={"pu-band " + cls}><div className="pu-label">{label}</div><div className="pu-nodes">{children}</div></div>
+  const band = (label: string, cls: string, children: ReactNode, drop?: ReturnType<typeof bandDrop>, key?: string) => (
+    <div className={"pu-band " + cls + (key && hint?.id === "band-" + key ? " drop-into" : "")} {...drop}><div className="pu-label">{label}</div><div className="pu-nodes">{children}</div></div>
   );
   return (
     <>
@@ -279,30 +342,33 @@ export function PurposeView() {
       <Board view="purpose" split="1:1" panels={[
       { id: "example", title: T.layout.p.example, col: "F", node: empty ? <div className="card">{example}</div> : <details className="pu-ex-details"><summary>{U.exShow}</summary><div className="card">{example}</div></details> },
       { id: "add", title: T.layout.p.add, col: "F", node: <div className="card add-card">
-        <AddRow coll="goals" label={goalLabel} namePh={tops.length ? U.goalPh : U.purposePh} onAdd={(id, t) => { update((d) => { d.goals.push({ id, title: t, links: [], ...(goalParent && tops.length ? { parent: goalParent } : {}) }); }); select(id); }} />
+        {!purpose && <AddRow coll="goals" label={U.addPurpose} namePh={U.purposePh} onAdd={(id, t) => { update((d) => { d.goals = [{ id, title: t, links: [] }]; }); select(id); }} />}
         <AddRow coll="criteria" label={critLabel} namePh={U.criterionPh}
-          onAdd={(id, t) => { update((d) => { d.criteria.push({ id, title: t, target: "", status: "Draft", serves: !critParent && critFor ? [critFor] : [], links: [], ...(critParent ? { parent: critParent } : {}) }); }); select(id); }} />
+          onAdd={(id, t) => { update((d) => { d.criteria.push({ id, title: t, target: "", status: "Draft", serves: [], links: [], ...(critParent ? { parent: critParent } : {}) }); }); select(id); }} />
         <AddRow coll="deliverables" label={delLabel} namePh={U.deliverablePh}
           onAdd={(id, t) => { update((d) => { d.deliverables.push({ id, title: t, status: "Draft", serves: !delParent && delFor ? [delFor] : [], links: [], ...(delParent ? { parent: delParent } : {}) }); }); select(id); }} />
       </div> },
       { id: "diagram", title: T.layout.p.diagram, col: "F", node: <div className="card pu-card">
+        <div className="card-head pu-head">
+          <p className="muted small m0">{U.dragHint}</p>
+          <button type="button" className="btn ghost small" onClick={() => update((d) => tidy(d))} title={U.tidyHint}>{U.tidy}</button>
+        </div>
         <div className="pu-wrap">
           <div className="pu-diagram" ref={box}>
             <svg className="pu-lines" aria-hidden="true">
               {lines.map((l) => <path key={l.a + ">" + l.b} d={l.d} className={(l.sub ? "sub " : "") + (lit ? (isLit(l.a) && isLit(l.b) ? "on" : "off") : "")} />)}
             </svg>
-            {band(U.purpose + " · " + U.goals, "b-goals", <div className="pu-forest">
-              {gF.tops.map((g) => tree("goal", gF, g))}
-              {!p.goals.length && <span className="muted small">{U.writePurpose}</span>}
+            {band(U.purpose, "b-goals", <div className="pu-forest">
+              {purpose ? node("goal", purpose, 0) : <span className="muted small">{U.writePurpose}</span>}
             </div>)}
             {band(U.criteria, "b-crit", <div className="pu-forest">
               {cF.tops.map((c) => tree("crit", cF, c))}
               {!p.criteria.length && <span className="muted small">{U.nothingYet}</span>}
-            </div>)}
+            </div>, bandDrop("crit"), "crit")}
             {band(U.deliverables, "b-del", <div className="pu-forest">
               {dF.tops.map((d) => tree("del", dF, d))}
               {!p.deliverables.length && <span className="muted small">{U.nothingYet}</span>}
-            </div>)}
+            </div>, bandDrop("del"), "del")}
           </div>
           <div className="pu-axis" aria-hidden="true">
             <span className="pu-why">{U.why}</span><span className="pu-arrow up" /><span className="pu-arrow down" /><span className="pu-how">{U.how}</span>

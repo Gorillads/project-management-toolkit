@@ -595,3 +595,21 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
 .add-row .btn { white-space: normal; text-align: left; max-width: 100%; }
 .group-names { font-size: 12px; color: var(--text-soft); }
 .seg button.active .muted { color: inherit; opacity: .8; }
+
+/* Moving items in the purpose diagram */
+.pu-node { cursor: pointer; user-select: none; }
+.pu-node[draggable="true"] { cursor: grab; }
+.pu-node.dragging { opacity: .4; }
+.pu-node.drop-before { box-shadow: -4px 0 0 var(--accent); }
+.pu-node.drop-after { box-shadow: 4px 0 0 var(--accent); }
+.pu-node.drop-into, .pu-node.drop-link { outline: 3px solid var(--accent); outline-offset: 2px; }
+.pu-band.drop-into { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.pu-head { gap: 12px; align-items: flex-start; }
+.pu-head p { max-width: 760px; }
+/* Keep each level on one row on wide screens, so lines cross less; items
+   shrink a little instead of wrapping. Narrow screens still wrap. */
+@media (min-width: 900px) {
+  .pu-forest { flex-wrap: nowrap; }
+  .pu-forest > .pu-tree { flex: 0 1 auto; min-width: 0; }
+  .pu-forest .pu-node:not(.root) { min-width: 96px; }
+}

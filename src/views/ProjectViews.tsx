@@ -110,7 +110,7 @@ export function OverviewView() {
       { id: "summary", title: T.layout.p.summary, col: "F", node: <div className="card pu-summary">
         <div className="card-head"><h3>{T.tools.purpose}</h3><button type="button" className="btn ghost small" onClick={() => go("purpose")}>{T.open}</button></div>
         <div className="pu-sum-grid">
-          {([[p.goals.length, T.pu.goals, "↑ " + T.pu.why], [p.criteria.length, T.pu.criteria, ""], [p.deliverables.length, T.pu.deliverables, "↓ " + T.pu.how]] as const).map(([n, l, hint]) => (
+          {([[p.goals[0]?.title.trim() ? "✓" : "–", T.pu.purpose, "↑ " + T.pu.why], [p.criteria.length, T.pu.criteria, ""], [p.deliverables.length, T.pu.deliverables, "↓ " + T.pu.how]] as const).map(([n, l, hint]) => (
             <button key={l} type="button" className="stat stat-btn" onClick={() => go("purpose")}><div className="v">{n}</div><div className="l">{l} <span className="muted">{hint}</span></div></button>
           ))}
           {(() => { const g = gaps(p, T); return (

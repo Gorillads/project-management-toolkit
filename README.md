@@ -19,7 +19,7 @@ same Danish/English toggle, same "your data stays in your browser" model.
 ## How well-shaped is the project?
 
 The Overview opens with a development checklist: the purpose is written and
-broken into goals; every goal has a success criterion with a target; every
+has success criteria; every success criterion has a target; every
 criterion has a deliverable and every deliverable a reason; the team is named;
 stakeholders and risks are identified; every risk has an owner, a response and
 a link to what it affects; and success criteria and deliverables are agreed.
@@ -42,19 +42,23 @@ browser.
 
 Every project starts with the **core**:
 
-- **Purpose & success**: the project's why and how, as a hierarchy. One
-  **purpose** (the overall goal or vision) with optional sub-goals; measurable
-  **success criteria** (with sub-criteria) that show the goals are reached;
+- **Purpose & success**: the project's why and how, as a hierarchy of
+  three levels. One **purpose** (the overall goal or vision, written in this
+  tab and separate from the description on the Overview); measurable
+  **success criteria** (with sub-criteria) that show the purpose is reached;
   and **deliverables** (with sub-deliverables), the actual hand-ins, each
-  counting towards one or more criteria. The purpose is written in this tab
-  as the top item; it is separate from the project description on the
-  Overview. Drawn as three bands with lines between them: read upwards for
-  why, downwards for how. A sub-item sits directly below the item it belongs
-  to, joined by a dashed line, so a sub-goal hangs under its goal and a
-  sub-criterion under its criterion. Clicking an item
-  highlights its chain, and a logic check flags goals nobody measures,
-  criteria nothing delivers, and deliverables with no reason. Example: a
-  bridge whose purpose is to connect two areas, measured by "two lanes of
+  counting towards one or more criteria. Drawn as three bands with lines
+  between them: read upwards for why, downwards for how. A sub-item sits
+  directly below the item it belongs to. Items can be moved by dragging
+  them in the diagram (onto the edge of another item to sit beside it, onto
+  the middle to go under it, a deliverable onto a criterion to count towards
+  it) or with the Position buttons in the editor; **Tidy up** orders the
+  deliverables after the criteria so fewer lines cross. Clicking an item
+  highlights its chain, and a logic check flags a purpose nobody measures,
+  criteria nothing delivers, and deliverables with no reason. Older projects
+  with sub-goals are converted: each sub-goal becomes a success criterion,
+  with the criteria that measured it as its sub-criteria. Example: a bridge
+  whose purpose is to connect two areas, measured by "two lanes of
   traffic", delivered as a working bridge with a given capacity.
 - **Overview**: the project's name and description, counts, the power/interest
   grid, the probability × impact map and the stakeholder ↔ risk network.
