@@ -37,6 +37,8 @@ groups and stakeholder groups, and "Edit categories" on the Risks page edits
 the risk categories. Add new ones, rename one (everyone in it moves along),
 reorder, or remove one (its members are kept, just without a group). New
 projects start with two team groups, Project team and Steering committee.
+The new-project setup has the same "Edit groups" panel in its Team and
+Stakeholders steps, and suggested stakeholders start without a group.
 
 ## IDs
 

@@ -1,5 +1,5 @@
 import type { Lang, Project } from "../model/types";
-import { defaultAnalyses, projectFromTemplate } from "../data/projects";
+import { P_GROUPS, S_CATS, defaultAnalyses, projectFromTemplate } from "../data/projects";
 import { tplById } from "../data/templates";
 import { DEFAULT_TOOLS } from "../data/catalog";
 import { cleanId } from "./links";
@@ -20,6 +20,38 @@ export interface Answers {
   people: WzPerson[];
   stakes: WzStake[];
   risks: WzRisk[];
+  /** The group lists the project will start with, editable in the setup. */
+  pGroups: string[];
+  sCats: string[];
+}
+
+/** Edit a group list in the answers, keeping the rows that use it in step. */
+export type GroupList = "pGroups" | "sCats";
+const ROWS = { pGroups: ["people", "group"], sCats: ["stakes", "cat"] } as const;
+export function groupCount(a: Answers, k: GroupList, name: string) {
+  const [rows, f] = ROWS[k];
+  return (a[rows] as unknown as Record<string, unknown>[]).filter((r) => r[f] === name && (rows === "people" || (r as { on?: boolean }).on !== false)).length;
+}
+export function groupAdd(a: Answers, k: GroupList, name: string): Answers | null {
+  const n = name.trim();
+  if (!n || a[k].some((c) => c.toLowerCase() === n.toLowerCase())) return null;
+  return { ...a, [k]: [...a[k], n] };
+}
+export function groupRename(a: Answers, k: GroupList, from: string, to: string): Answers | null {
+  const n = to.trim();
+  if (!n || a[k].some((c) => c !== from && c.toLowerCase() === n.toLowerCase())) return null;
+  const [rows, f] = ROWS[k];
+  return { ...a, [k]: a[k].map((c) => (c === from ? n : c)), [rows]: (a[rows] as unknown as Record<string, unknown>[]).map((r) => (r[f] === from ? { ...r, [f]: n } : r)) };
+}
+export function groupRemove(a: Answers, k: GroupList, name: string): Answers {
+  const [rows, f] = ROWS[k];
+  return { ...a, [k]: a[k].filter((c) => c !== name), [rows]: (a[rows] as unknown as Record<string, unknown>[]).map((r) => (r[f] === name ? { ...r, [f]: "" } : r)) };
+}
+export function groupMove(a: Answers, k: GroupList, name: string, dir: -1 | 1): Answers {
+  const list = [...a[k]], i = list.indexOf(name), j = i + dir;
+  if (i < 0 || j < 0 || j >= list.length) return a;
+  [list[i], list[j]] = [list[j], list[i]];
+  return { ...a, [k]: list };
 }
 
 let n = 0;
@@ -54,7 +86,7 @@ export function previewIds(a: Answers) {
 export function templateDefaults(templateId: string, lang: Lang): Pick<Answers, "stakes" | "risks"> {
   const tpl = tplById(templateId);
   return {
-    stakes: tpl.groups.map(([name, cat, type], i) => ({ key: key(), id: "", name: name[lang], cat, type, power: i < 2 ? 4 : 3, interest: type === "Internal" ? 4 : 3, on: true })),
+    stakes: tpl.groups.map(([name, , type], i) => ({ key: key(), id: "", name: name[lang], cat: "", type, power: i < 2 ? 4 : 3, interest: type === "Internal" ? 4 : 3, on: true })),
     risks: tpl.risks.map(([title, cat]) => ({ key: key(), id: "", title: title[lang], cat, p: 3, i: 3, owner: "", affects: [], mit: "", on: true })),
   };
 }
@@ -68,6 +100,8 @@ export function initialAnswers(templateId: string, lang: Lang): Answers {
       { key: key(), id: "", name: "", role: da ? "Projektejer / sponsor" : "Project sponsor", group: "" },
     ],
     ...templateDefaults(templateId, lang),
+    pGroups: [...P_GROUPS],
+    sCats: [...S_CATS],
   };
 }
 
@@ -89,6 +123,8 @@ export function buildProject(a: Answers, lang: Lang): Project {
     sc.p = x.p; sc.i = x.i;
     return { id: ids.get(x.key)!, title: x.title.trim(), cat: x.cat, status: "Open", mit: x.mit.trim(), owner: x.owner ? ids.get(x.owner) : undefined, links: x.affects.map((k) => ids.get(k)).filter(Boolean) as string[], sc };
   });
+  p.pGroups = [...a.pGroups];
+  p.sCats = [...a.sCats];
   p.enabled = [...DEFAULT_TOOLS];
   syncCats(p);
   p.analyses = defaultAnalyses(p.stakeholders, lang);

@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useStore } from "../state/store";
 import { t, tv } from "../i18n";
 import { TEMPLATES } from "../data/templates";
-import { P_GROUPS, R_CATS, S_CATS, exampleProject } from "../data/projects";
-import { activeRows, buildProject, initialAnswers, key, previewIds, templateDefaults, type Answers } from "../lib/wizard";
+import { R_CATS, exampleProject } from "../data/projects";
+import { ListEditor } from "./CategoryEditor";
+import { activeRows, buildProject, groupAdd, groupCount, groupMove, groupRemove, groupRename, initialAnswers, key, previewIds, templateDefaults, type Answers, type GroupList } from "../lib/wizard";
 import { cleanId } from "../lib/links";
 
 const DRAFT_KEY = "pmt-wizard-draft-v2";
@@ -44,7 +45,7 @@ export function NewProjectWizard({ open, templateId, onClose }: { open: boolean;
       created.current = false;
       const draft = loadDraft();
       const worth = draft && (draft.step > 0 || draft.a.name.trim());
-      if (draft && worth && (!templateId || draft.a.templateId === templateId)) { setA(draft.a); setStep(draft.step); setResumed(true); }
+      if (draft && worth && (!templateId || draft.a.templateId === templateId)) { setA({ ...initialAnswers(draft.a.templateId ?? "general", lang), ...draft.a }); setStep(draft.step); setResumed(true); }
       else { setA(initialAnswers(templateId ?? "general", lang)); setStep(0); setResumed(false); }
       setTried(false);
       d.showModal();
@@ -82,6 +83,19 @@ export function NewProjectWizard({ open, templateId, onClose }: { open: boolean;
     <div className="field-row"><label htmlFor={fid}>{text}</label>{el}{hint && <span className="err small">{hint}</span>}</div>
   );
 
+  /** The group list for this step, edited in the answers (not yet a project). */
+  const groupEditor = (k: GroupList, title: string) => (
+    <details className="cat-details wz-groups">
+      <summary>{T.manageGroups}</summary>
+      <p className="muted small">{T.catHint}</p>
+      <ListEditor title={title} items={a[k]} count={(c) => groupCount(a, k, c)}
+        onAdd={(n) => { const r = groupAdd(a, k, n); if (r) setA(r); return !!r; }}
+        onRename={(x, y) => { const r = groupRename(a, k, x, y); if (r) setA(r); return !!r; }}
+        onRemove={(c) => setA(groupRemove(a, k, c))}
+        onMove={(c, dir) => setA(groupMove(a, k, c, dir))} />
+    </details>
+  );
+
   let body: ReactNode = null;
   if (step === 0) body = (
     <>
@@ -113,13 +127,14 @@ export function NewProjectWizard({ open, templateId, onClose }: { open: boolean;
             {idInput("people", x.key, x.id, `${W.q.name2} ${i + 1}`)}
             <input className="input" aria-label={`${W.q.name2} ${i + 1}`} value={x.name} onChange={(e) => setRow("people", x.key, { name: e.target.value })} autoFocus={i === 0} />
             <input className="input" aria-label={`${W.q.role} ${i + 1}`} value={x.role} onChange={(e) => setRow("people", x.key, { role: e.target.value })} />
-            <select className="sel" aria-label={`${W.q.group} ${i + 1}`} value={x.group} onChange={(e) => setRow("people", x.key, { group: e.target.value })}><option value="">{T.noGroup}</option>{P_GROUPS.map((g) => <option key={g} value={g}>{tv(lang, g)}</option>)}</select>
+            <select className="sel" aria-label={`${W.q.group} ${i + 1}`} value={x.group} onChange={(e) => setRow("people", x.key, { group: e.target.value })}><option value="">{T.noGroup}</option>{a.pGroups.map((g) => <option key={g} value={g}>{tv(lang, g)}</option>)}</select>
             <button type="button" className="icon-x" aria-label={T.del} onClick={() => delRow("people", x.key)}>×</button>
           </div>
         ))}
       </div>
       <button type="button" className="btn ghost small self-start" onClick={() => set({ people: [...a.people, { key: key(), id: "", name: "", role: "", group: "" }] })}>+ {W.q.addPerson}</button>
       <p className="muted small m0">{T.idLabel}: {T.idHint}</p>
+      {groupEditor("pGroups", T.teamGroups)}
     </>
   );
   if (step === 2) body = (
@@ -132,7 +147,7 @@ export function NewProjectWizard({ open, templateId, onClose }: { open: boolean;
               <input type="checkbox" checked={x.on} aria-label={x.name || `${i + 1}`} onChange={(e) => setRow("stakes", x.key, { on: e.target.checked })} />
               {x.on && idInput("stakes", x.key, x.id, x.name || `${i + 1}`)}
               <input className="input grow" aria-label={`${T.name} ${i + 1}`} value={x.name} onChange={(e) => setRow("stakes", x.key, { name: e.target.value })} />
-              <select className="sel" aria-label={T.group} value={x.cat} onChange={(e) => setRow("stakes", x.key, { cat: e.target.value })}><option value="">{T.noGroup}</option>{S_CATS.map((c) => <option key={c} value={c}>{tv(lang, c)}</option>)}</select>
+              <select className="sel" aria-label={T.group} value={x.cat} onChange={(e) => setRow("stakes", x.key, { cat: e.target.value })}><option value="">{T.noGroup}</option>{a.sCats.map((c) => <option key={c} value={c}>{tv(lang, c)}</option>)}</select>
               <select className="sel" aria-label={T.type} value={x.type} onChange={(e) => setRow("stakes", x.key, { type: e.target.value })}><option value="Internal">{T.internal}</option><option value="External">{T.external}</option></select>
             </div>
             {x.on && <div className="wz-row wz-scores"><span className="muted small">{W.q.power}</span><Level label={W.q.power} value={x.power} onChange={(v) => setRow("stakes", x.key, { power: v })} /><span className="muted small">{W.q.interest}</span><Level label={W.q.interest} value={x.interest} onChange={(v) => setRow("stakes", x.key, { interest: v })} /></div>}
@@ -140,6 +155,7 @@ export function NewProjectWizard({ open, templateId, onClose }: { open: boolean;
         ))}
       </div>
       <button type="button" className="btn ghost small self-start" onClick={() => set({ stakes: [...a.stakes, { key: key(), id: "", name: "", cat: "", type: "Internal", power: 3, interest: 3, on: true }] })}>+ {W.q.addStake}</button>
+      {groupEditor("sCats", T.stakeholderGroups)}
     </>
   );
   if (step === 3) body = (

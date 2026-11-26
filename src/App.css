@@ -432,3 +432,7 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
 .cat-list li { display: flex; gap: 6px; align-items: center; }
 .cat-list .input { flex: 1; min-width: 0; padding: 4px 8px; }
 .icon-x:disabled { opacity: .3; cursor: default; }
+.wz-groups { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; background: var(--panel); }
+.wz-groups .cat-editor { max-width: 520px; }
+.wz-card, .wz-row { min-width: 0; }
+.wz-row > .sel { max-width: 100%; min-width: 0; flex: 0 1 auto; }
