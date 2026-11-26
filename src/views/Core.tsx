@@ -82,10 +82,73 @@ function PersonDetail({ x }: { x: Person }) {
   );
 }
 
+/** A group of actors: a team group or a stakeholder group ("" = no group). */
+interface Group { key: string; side: "team" | "stake"; name: string; members: string[] }
+const groupKey = (side: "team" | "stake", name: string) => `group:${side}:${name}`;
+function groupsOf(p: Project): Group[] {
+  const make = (side: "team" | "stake", names: string[], items: { id: string; g: string }[]) => {
+    const known = names.filter(Boolean);
+    const out = known.map((n) => ({ key: groupKey(side, n), side, name: n, members: items.filter((x) => x.g === n).map((x) => x.id) }));
+    const loose = items.filter((x) => !known.includes(x.g)).map((x) => x.id);
+    if (loose.length) out.push({ key: groupKey(side, ""), side, name: "", members: loose });
+    return out;
+  };
+  return [
+    ...make("team", p.pGroups, p.people.map((x) => ({ id: x.id, g: x.group ?? "" }))),
+    ...make("stake", p.sCats, p.stakeholders.map((x) => ({ id: x.id, g: x.cat ?? "" }))),
+  ];
+}
+/** Every risk a group is involved in: owned by a member or affecting one. */
+const groupRisks = (p: Project, g: Group) => {
+  const ids = new Set(g.members);
+  return p.risks.filter((r) => r.owners.some((o) => ids.has(o)) || r.links.some((l) => ids.has(l)));
+};
+
+function GroupDetail({ g }: { g: Group }) {
+  const { p, lang, T, update } = useApp();
+  const team = g.side === "team";
+  const name = g.name ? tv(lang, g.name) : T.noGroup;
+  const stakes = p.stakeholders.filter((s) => g.members.includes(s.id));
+  const avg = (k: string) => (stakes.length ? (stakes.reduce((n, s) => n + (s.sc[k] ?? 0), 0) / stakes.length).toFixed(1) : "–");
+  const others = (team ? p.people : p.stakeholders).filter((x) => !g.members.includes(x.id));
+  const setGroup = (id: string, to: string) => update((d) => {
+    if (team) { const x = d.people.find((y) => y.id === id); if (x) x.group = to; }
+    else { const x = d.stakeholders.find((y) => y.id === id); if (x) x.cat = to; }
+  });
+  const risks = groupRisks(p, g);
+  return (
+    <div className="detail">
+      <div><span className="id">{team ? T.teamGroup : T.stakeholderGroup} · {g.members.length} {T.membersWord}</span><h4>{name}</h4></div>
+      {!team && stakes.length > 0 && (
+        <div className="row-gap">
+          <span className="muted small">{T.avgWord} {T.wz.q.power}</span><b>{avg("power")}</b>
+          <span className="muted small">{T.avgWord} {T.wz.q.interest}</span><b>{avg("interest")}</b>
+        </div>
+      )}
+      <div className="sub-h">{T.membersTitle}</div>
+      {g.members.length ? (
+        <div className="chips">{g.members.map((id) => <Chip key={id} id={id} onRemove={g.name ? () => setGroup(id, "") : undefined} />)}</div>
+      ) : <div className="empty">{T.none}</div>}
+      {g.name && others.length > 0 && (
+        <select className="sel" aria-label={T.addMember} value="" onChange={(e) => e.target.value && setGroup(e.target.value, g.name)}>
+          <option value="">+ {T.addMember}</option>
+          {others.map((x) => <option key={x.id} value={x.id}>{x.id} · {x.title}</option>)}
+        </select>
+      )}
+      <div className="sub-h">{T.groupRisks} ({risks.length})</div>
+      <RiskList risks={risks} />
+    </div>
+  );
+}
+
 export function ActorsView() {
   const { p, lang, T, ui, setUi, update } = useApp();
   const [filter, setFilter] = useState<"all" | "team" | "stake">("all");
+  const [mode, setMode] = useState<"people" | "groups">(() => (ui.sel.actors?.startsWith("group:") ? "groups" : "people"));
   const selId = ui.sel.actors;
+  const allGroups = groupsOf(p);
+  const groups = allGroups.filter((g) => filter === "all" || g.side === filter);
+  const group = allGroups.find((g) => g.key === selId);
   const pick = (id: string) => setUi({ sel: { ...ui.sel, actors: id }, flash: undefined });
   const person = p.people.find((x) => x.id === selId);
   const stake = p.stakeholders.find((x) => x.id === selId);
@@ -121,13 +184,33 @@ export function ActorsView() {
       </div> },
       { id: "list", title: T.layout.p.list, col: "L", node: <div className="card">
           <div className="card-head">
+            <div className="seg small" role="group" aria-label={T.viewAs}>
+              {([["people", T.individuals], ["groups", T.groupsWord]] as const).map(([k, l]) => (
+                <button key={k} type="button" className={mode === k ? "active" : ""} aria-pressed={mode === k} onClick={() => setMode(k)}>{l}</button>
+              ))}
+            </div>
             <div className="seg small">
               {([["all", T.all, p.people.length + p.stakeholders.length], ["team", T.teamMembers, p.people.length], ["stake", T.stakeholdersWord, p.stakeholders.length]] as const).map(([k, l, n]) => (
                 <button key={k} type="button" className={filter === k ? "active" : ""} onClick={() => setFilter(k)}>{l} <span className="muted">{n}</span></button>
               ))}
             </div>
           </div>
-          {rows.length === 0 ? <div className="empty">{T.noActorsYet}</div> : (
+          {mode === "groups" ? (groups.length === 0 ? <div className="empty">{T.noActorsYet}</div> : (
+            <div className="scroll-x"><table>
+              <thead><tr><th>{T.group}</th><th>{T.kind}</th><th>{T.membersTitle}</th><th>{T.risksCol}</th></tr></thead>
+              <tbody>{groups.map((g) => {
+                const n = groupRisks(p, g).length;
+                return (
+                  <tr key={g.key} data-row={g.key} className={rowClass(selId === g.key, false)} onClick={() => pick(g.key)}>
+                    <td><b>{g.name ? tv(lang, g.name) : <span className="muted">{T.noGroup}</span>}</b></td>
+                    <td><span className={"badge " + (g.side === "team" ? "type-team" : "")}>{g.side === "team" ? T.teamGroup : T.stakeholderGroup}</span></td>
+                    <td><span className="muted small">{g.members.length}</span> <span className="group-names">{g.members.slice(0, 4).map((id) => p.people.find((x) => x.id === id)?.title ?? p.stakeholders.find((x) => x.id === id)?.title).join(", ")}{g.members.length > 4 ? ", …" : ""}</span></td>
+                    <td>{n ? <span className="badge sev med">{n}</span> : <span className="muted small">0</span>}</td>
+                  </tr>
+                );
+              })}</tbody>
+            </table></div>
+          )) : rows.length === 0 ? <div className="empty">{T.noActorsYet}</div> : (
             <div className="scroll-x"><table>
               <thead><tr><th>{T.idLabel}</th><th>{T.name}</th><th>{T.kind}</th><th>{T.role} / {T.group}</th><th>{T.risksCol}</th></tr></thead>
               <tbody>{rows.map((r) => (
@@ -140,8 +223,8 @@ export function ActorsView() {
             </table></div>
           )}
         </div> },
-      { id: "details", title: T.layout.p.details, col: "R", node: <div className="card">{person ? <PersonDetail x={person} /> : stake ? <StakeholderDetail s={stake} /> : <div className="empty">{T.selectHint}</div>}</div> },
-      { id: "grid", title: T.powerInterest, col: "R", node: <div className="card"><h3>{T.powerInterest}</h3><StakeholderGrid a={coreAnalysis(p, T)} selected={selId} onPick={pick} /><p className="muted small">{T.splitNote}</p></div> },
+      { id: "details", title: T.layout.p.details, col: "R", node: <div className="card">{person ? <PersonDetail x={person} /> : stake ? <StakeholderDetail s={stake} /> : group ? <GroupDetail g={group} /> : <div className="empty">{T.selectHint}</div>}</div> },
+      { id: "grid", title: T.powerInterest, col: "R", node: <div className="card"><h3>{T.powerInterest}</h3><StakeholderGrid a={coreAnalysis(p, T)} selected={selId} highlight={group?.side === "stake" ? group.members : undefined} onPick={pick} /><p className="muted small">{T.splitNote}</p></div> },
       ]} />
     </>
   );

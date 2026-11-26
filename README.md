@@ -60,7 +60,12 @@ Every project starts with the **core**:
   grid, the probability × impact map and the stakeholder ↔ risk network.
 - **Actors**: the team running the project and the stakeholders around it,
   in one list, with each stakeholder on the power/interest grid. Selecting an
-  actor shows the risks they own or are affected by.
+  actor shows the risks they own or are affected by. Switch between
+  **Individuals** and **Groups** to see the team groups (e.g. Project team,
+  Steering committee) and stakeholder groups as one row each, with their
+  members, the risks the group owns or is affected by, and for stakeholder
+  groups the average power and interest (members are highlighted on the
+  grid). Members can be added to or removed from a group there.
 - **Risks**: what could happen and why (the cause), its probability, and its
   consequence on the three sides of the project triangle: **price, time and
   resources** (0–5 each), with quality in the middle as what is at stake. A

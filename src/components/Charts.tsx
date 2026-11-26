@@ -16,7 +16,7 @@ export function quadLabels(p: Project, a: Analysis, lang: "da" | "en") {
   return a.quads ?? { hh: `${hi} ${y}, ${hi2} ${x}`, hl: `${hi} ${y}, ${lo} ${x}`, lh: `${lang === "da" ? "Lav" : "Low"} ${y}, ${hi2} ${x}`, ll: `${lang === "da" ? "Lav" : "Low"} ${y}, ${lo} ${x}` };
 }
 
-export function StakeholderGrid({ a, mini, selected, onPick }: { a: Analysis; mini?: boolean; selected?: string; onPick?: (id: string) => void }) {
+export function StakeholderGrid({ a, mini, selected, highlight, onPick }: { a: Analysis; mini?: boolean; selected?: string; highlight?: string[]; onPick?: (id: string) => void }) {
   const { p, lang } = useApp();
   const inScope = p.stakeholders.filter((s) => a.ids.includes(s.id));
   const yN = dimName(p, "S", a.y, lang), xN = dimName(p, "S", a.x, lang);
@@ -24,7 +24,7 @@ export function StakeholderGrid({ a, mini, selected, onPick }: { a: Analysis; mi
     if (mini) return <div key={s.id} className="mini-name">{s.title}</div>;
     const n = risksFor(p, s.id).length;
     return (
-      <button key={s.id} type="button" className={"dot-chip" + (selected === s.id ? " selected" : "")} onClick={() => onPick?.(s.id)} title={`${s.title}: ${yN} ${s.sc[a.y]}, ${xN} ${s.sc[a.x]}`}>
+      <button key={s.id} type="button" className={"dot-chip" + (selected === s.id || highlight?.includes(s.id) ? " selected" : "")} onClick={() => onPick?.(s.id)} title={`${s.title}: ${yN} ${s.sc[a.y]}, ${xN} ${s.sc[a.x]}`}>
         <span className="nm">{s.title}</span>{n > 0 && <span className="rc">{n}</span>}
       </button>
     );
