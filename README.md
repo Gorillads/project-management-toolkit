@@ -9,74 +9,52 @@ same Danish/English toggle, same "your data stays in your browser" model.
 
 **Live:** https://gorillads.github.io/project-management-toolkit/
 
-## Tools
+## Start simple, add as you go
 
-| Group | Tools |
-|---|---|
-| Project | Overview (dashboard, pinned charts, stakeholder ↔ risk network, tool library), Project templates, Project charter |
-| Registers | Stakeholders, Risks (with Assumptions & dependencies), Issue log, Decision log, Change requests (optional) |
-| Planning | Work breakdown, Schedule & milestones (Gantt), Task board, Budget with linked source files |
-| People | People directory, RACI matrix, Engagement matrix, Communication plan |
-| Strategy & review | SWOT, Benefits register, Lessons learned |
+Every project starts with the **core**:
 
-Each project chooses which tools it uses in the tool library on the Overview.
+- **Overview**: the project's name and purpose, counts, the power/interest
+  grid, the probability × impact map and the stakeholder ↔ risk network.
+- **Actors**: the team running the project and the stakeholders around it,
+  in one list, with each stakeholder on the power/interest grid. Selecting an
+  actor shows the risks they own or are affected by.
+- **Risks**: probability, impact, owner and the actors each risk affects.
 
-## Ideas the app is built around
+Everything else is an **add-on**, switched on from "Add tools" on the
+Overview when the project needs it: stakeholder analysis (12 dimensions,
+saved analyses, comparison), risk analysis (lenses, assumptions and
+dependencies), issue log with ⚑ flags on risks, decision log, change
+requests, project templates, charter, work breakdown, schedule, task board,
+budget with linked spreadsheets, people directory, RACI, engagement matrix,
+communication plan, SWOT, benefits and lessons learned. Removing an add-on
+keeps its data.
 
-- **Swappable axes.** Stakeholders are scored 1–5 on 12 dimensions (power,
-  interest, monetary investment, direct influence, decision authority,
-  urgency, legitimacy, support, share of revenue, risk of churn…), and risks
-  on 9 (probability, overall, financial, schedule and reputation impact,
-  proximity, detectability…). An *analysis* or *lens* picks two of them, a
-  set of stakeholders or risk categories, and a 2×2 or 5×5 grid. You can add
-  your own dimensions, save analyses (e.g. "investors only"), compare them
-  side by side, and pin them to the Overview.
-- **Links are stored once and read both ways.** An item stores the IDs it
-  links to; `src/lib/links.ts` builds the backlink index, so "also appears
-  in" never drifts. Deleting an item removes it from every link.
-- **⚑ turns a risk into an issue.** Flagging opens an issue linked to the
-  risk; removing the flag closes it but keeps it in the log.
-- **Templates** (ERP rollout, app launch, organisational restructuring,
-  office or warehouse move, physical product launch) bring phases with
-  decision gates, typical decisions, stakeholders, risks and a tool set.
-  The Decision log shows which typical decisions are made and which are
-  still ahead.
+## IDs
+
+Every new item gets an ID field. Leave it empty and the next free ID is
+chosen (P1, S1, R1…); type your own (e.g. `IT-DRIFT`) and it is used if
+no other item has it. IDs can be changed later in the item's editor, and the
+new ID is carried into every link that points at it. Clearing a custom ID
+gives the item an automatic one again.
 
 ## Starting a project
 
-The **+** in the tab bar opens a guided setup that asks, one topic at a time:
-
-1. **Project type**: ERP rollout, app launch, organisational restructuring,
-   office or warehouse move, or physical product launch.
-2. **The basics**: name, organisation, purpose, start date, go-live date and budget.
-3. **Scope and success**: what is in and out, and measurable success criteria.
-4. **People**: project manager, sponsor and core team, with roles and responsibilities.
-5. **Stakeholders**: the type's typical stakeholders, prefilled. Untick, rename or
-   add, and rate power and interest.
-6. **Risks**: the type's typical risks, prefilled. Rate probability and impact,
-   pick an owner and tick the stakeholders each risk affects.
-7. **Plan**: one decision gate per phase, spread between start and go-live.
-8. **Tools**: the type's recommended tools are ticked.
-9. **Review**, then create.
-
-The answers become a linked project: people own risks, risks link to the
-stakeholders they affect, each phase becomes a work package and a milestone on
-the schedule, and the charter, budget and success criteria are filled in.
-Unfinished answers are kept if the dialog is closed. "Project templates" also
-starts the setup with a type already chosen.
+The **+** in the tab bar opens a five-step setup: the project (name,
+organisation, purpose and a project type that suggests typical stakeholders
+and risks), the team, the stakeholders (with power and interest), the risks
+(with probability, impact, owner and the stakeholders they affect) and a
+review that shows the IDs everything will get. Unfinished answers are kept if
+the dialog is closed.
 
 ## Working in it
 
 - **Search** (Ctrl+K) finds any item by ID or words in its title, role,
   mitigation or notes, and jumps to it.
 - **Undo / redo** (Ctrl+Z, Ctrl+Shift+Z, or the arrows in the header) per
-  project. Typing in a field undoes with the field's own undo.
-- **How it works** (the ? in the tab bar) is a five-step guide, shown once on
-  the first visit.
-- **Budget from a spreadsheet:** link a CSV with columns Area, Plan, Spent and
-  Forecast (or Område, Plan, Forbrugt, Prognose). Lines are matched by area
-  name, new areas are added, and Danish number formats like `2.010,50` are
-  understood. "Read numbers from a CSV" on a linked file updates it again.
+  project.
+- **How it works** (the ? in the tab bar) is a short guide, shown once.
+- **Budget from a spreadsheet** (add-on): link a CSV with columns Area,
+  Plan, Spent and Forecast (or Område, Plan, Forbrugt, Prognose).
 
 ## Import and export
 

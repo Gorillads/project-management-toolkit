@@ -87,7 +87,7 @@ export function RisksView() {
       <button type="button" className={"subtab" + (sub === "assumptions" ? " active" : "")} onClick={() => setUi({ rSub: "assumptions" })}>{T.assumptions}<span className="count">{p.assumptions.length}</span></button>
     </div>
   );
-  if (sub === "assumptions") return <><ViewHead id="risks" />{subs}<Assumptions /></>;
+  if (sub === "assumptions") return <><ViewHead id="riskanalysis" />{subs}<Assumptions /></>;
 
   const l = p.lenses.find((x) => x.id === ui.rCur) ?? p.lenses[0];
   const setL = (fn: (x: Lens) => void) => update((pp) => { const x = pp.lenses.find((y) => y.id === l.id); if (x) fn(x); });
@@ -111,7 +111,7 @@ export function RisksView() {
   if (ui.rMode === "compare") {
     return (
       <>
-        <ViewHead id="risks" />{subs}{toolbar}
+        <ViewHead id="riskanalysis" />{subs}{toolbar}
         <div className="compare">
           {p.lenses.map((x) => (
             <div className="card mini" key={x.id}>
@@ -130,7 +130,7 @@ export function RisksView() {
   const dimOpts = p.rDims.map((d) => <option key={d.id} value={d.id}>{d.name[lang]}</option>);
   return (
     <>
-      <ViewHead id="risks" />{subs}{toolbar}
+      <ViewHead id="riskanalysis" />{subs}{toolbar}
       <div className="card controls">
         <div className="ctrl"><span className="lbl">{T.lensLbl}</span>
           <div className="analysis-tabs">{p.lenses.map((x) => (

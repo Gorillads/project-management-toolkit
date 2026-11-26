@@ -19,7 +19,7 @@ export function WbsView() {
     { k: "notes", label: T.notes, type: "textarea" },
     { k: "links", label: T.links, type: "links" },
   ];
-  const depth = (c: string) => (c.match(/\./g) ?? []).length;
+  const depth = (c?: string) => ((c ?? "").match(/\./g) ?? []).length;
   return (
     <>
       <ViewHead id="wbs" />
@@ -39,7 +39,7 @@ export function WbsView() {
 const DAY = 864e5;
 export function ScheduleView() {
   const { p, T, lang, ui, setUi } = useApp();
-  const dated = p.wbs.filter((w) => w.start && w.end).sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+  const dated = p.wbs.filter((w) => w.start && w.end).sort((a, b) => (a.code ?? "").localeCompare(b.code ?? "", undefined, { numeric: true }));
   const dates = [...dated.flatMap((w) => [w.start!, w.end!]), ...p.milestones.map((m) => m.date)].filter(Boolean).map((d) => +new Date(d));
   const today = +new Date(new Date().toISOString().slice(0, 10));
   const min = dates.length ? Math.min(...dates, today) : today, max = dates.length ? Math.max(...dates, today) : today + 90 * DAY;

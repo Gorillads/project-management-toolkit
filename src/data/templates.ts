@@ -16,6 +16,32 @@ export interface Template {
 
 export const TEMPLATES: Template[] = [
   {
+    id: "general",
+    name: L("General project", "Generelt projekt"),
+    desc: L("Any project. Start with the basics and add what you need.", "Alle slags projekter. Start med det grundlæggende og tilføj det, du har brug for."),
+    phases: [
+      [L("Start", "Start"), L("Project approved", "Projekt godkendt")],
+      [L("Plan", "Planlæg"), L("Plan approved", "Plan godkendt")],
+      [L("Deliver", "Gennemfør"), L("Result accepted", "Resultat godkendt")],
+      [L("Close", "Afslut"), L("Project closed", "Projekt afsluttet")],
+    ],
+    groups: [
+      [L("Project sponsor", "Projektejer"), "Internal", "Internal"],
+      [L("Management", "Ledelse"), "Internal", "Internal"],
+      [L("Users", "Brugere"), "Internal", "Internal"],
+      [L("Customers", "Kunder"), "Customers", "External"],
+      [L("Suppliers", "Leverandører"), "Partners", "External"],
+    ],
+    risks: [
+      [L("Deadline slips", "Tidsplanen skrider"), "Organisational"],
+      [L("Budget overrun", "Budgetoverskridelse"), "Financial"],
+      [L("Key people unavailable", "Nøglepersoner er ikke til rådighed"), "Organisational"],
+      [L("Unclear or changing requirements", "Uklare eller skiftende krav"), "Organisational"],
+    ],
+    decisions: [L("Go / no-go to start", "Go / no-go for start"), L("Approve the plan", "Godkend planen"), L("Accept the result", "Godkend resultatet")],
+    tools: ["stakeholders", "issues", "decisions", "schedule", "board"],
+  },
+  {
     id: "erp",
     name: L("ERP / IT system rollout", "ERP / IT-systemudrulning"),
     desc: L("Replace or introduce a business system across departments.", "Udskift eller indfør et forretningssystem på tværs af afdelinger."),

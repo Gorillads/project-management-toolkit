@@ -2,7 +2,7 @@ import type { Person } from "../model/types";
 import { tv } from "../i18n";
 import { ENG_LEVELS } from "../data/catalog";
 import { uid } from "../data/projects";
-import { nextId, peopleFor, piQuad, refsOf, risksFor, typeOf } from "../lib/links";
+import { kindOf, nextId, peopleFor, piQuad, refsOf, risksFor } from "../lib/links";
 import { Chip, Chips, ItemEditor, ItemSelect, ViewHead, useApp, type Field } from "../components/ui";
 import { opts } from "./Registers";
 
@@ -33,7 +33,7 @@ export function PeopleView() {
               <div key={g} className="card">
                 <div className="card-head"><h3>{tv(lang, g)} <span className="badge">{ms.length}</span></h3><button type="button" className="btn ghost small" onClick={() => add(g)}>+ {T.add}</button></div>
                 {ms.map((x) => {
-                  const owns = refsOf(p, x.id).filter((i) => !["S", "P"].includes(typeOf(i)));
+                  const owns = refsOf(p, x.id).filter((i) => !["S", "P"].includes(kindOf(p, i)));
                   return (
                     <div key={x.id} className={"person" + (sel?.id === x.id ? " selected" : "") + (ui.flash === x.id ? " flash" : "")} onClick={() => setUi({ sel: { ...ui.sel, people: x.id }, flash: undefined })}>
                       <div className="avatar" aria-hidden="true">{initials(x.title) || "?"}</div>
@@ -96,7 +96,7 @@ export function EngagementView() {
     <>
       <ViewHead id="engagement" />
       <div className="card"><div className="scroll-x"><table className="eng">
-        <thead><tr><th>{T.tools.stakeholders}</th>{ENG_LEVELS.map((l) => <th key={l.en} className="center">{l[lang]}</th>)}<th>{T.gap}</th></tr></thead>
+        <thead><tr><th>{T.stakeholdersWord}</th>{ENG_LEVELS.map((l) => <th key={l.en} className="center">{l[lang]}</th>)}<th>{T.gap}</th></tr></thead>
         <tbody>{p.stakeholders.map((s) => {
           const c = s.engCurrent ?? 2, d = s.engDesired ?? 3;
           return (
@@ -127,7 +127,7 @@ export function CommsView() {
     <>
       <ViewHead id="comms" />
       <div className="card"><div className="scroll-x"><table>
-        <thead><tr><th>{T.tools.stakeholders}</th><th>{T.strategy}</th><th>{T.channel}</th><th>{T.frequency}</th><th>{T.who}</th><th>{T.raise}</th></tr></thead>
+        <thead><tr><th>{T.stakeholdersWord}</th><th>{T.strategy}</th><th>{T.channel}</th><th>{T.frequency}</th><th>{T.who}</th><th>{T.raise}</th></tr></thead>
         <tbody>{sorted.map((s) => {
           const q = piQuad(s);
           return (

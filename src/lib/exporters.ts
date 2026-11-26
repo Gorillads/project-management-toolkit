@@ -1,6 +1,7 @@
 import type { AnyItem, CollKey, Lang, Project } from "../model/types";
 import { t, tv } from "../i18n";
 import { tplById } from "../data/templates";
+import { repairProject } from "../state/store";
 import { COLLS, openIssueOf, peopleFor, pScore, risksFor, score, sev, titleOf } from "./links";
 
 export function downloadBlob(data: Blob | string, filename: string, type = "text/plain") {
@@ -19,7 +20,7 @@ export function parseProjectJson(text: string): Project {
   const data = JSON.parse(text);
   const p = (data.project ?? data) as Project;
   if (!p || !Array.isArray(p.stakeholders) || !Array.isArray(p.risks)) throw new Error("Not a project file");
-  return p;
+  return repairProject(p);
 }
 
 /* ---------------- CSV ----------------
@@ -169,7 +170,7 @@ export async function buildDeck(p: Project, lang: Lang): Promise<Blob> {
   s.addText([{ text: T.tools.benefits, options: { bold: true, breakLine: true } }, ...p.benefits.map((b) => ({ text: b.title, options: { bullet: true, breakLine: true } }))], { x: 0.5, y: 4.8, w: 6, h: 2, fontFace: F, fontSize: 12, color: C.txt, valign: "top" });
   s.addText([{ text: `${T.tools.risks}: ${T.high}`, options: { bold: true, breakLine: true } }, ...highRisks.map((r) => ({ text: `${r.id} ${r.title}`, options: { bullet: true, breakLine: true } }))], { x: 6.9, y: 4.8, w: 6, h: 2, fontFace: F, fontSize: 12, color: C.txt, valign: "top" });
 
-  s = base(T.tools.stakeholders, `${p.stakeholders.filter((x) => x.type === "Internal").length} ${T.internal.toLowerCase()} · ${p.stakeholders.filter((x) => x.type === "External").length} ${T.external.toLowerCase()}`);
+  s = base(T.stakeholdersWord, `${p.stakeholders.filter((x) => x.type === "Internal").length} ${T.internal.toLowerCase()} · ${p.stakeholders.filter((x) => x.type === "External").length} ${T.external.toLowerCase()}`);
   (["Internal", "External"] as const).forEach((ty, k) => {
     const rows: unknown[][] = [[th(ty === "Internal" ? T.internal : T.external), th(T.group), th(T.contacts), th(T.risksCol)]];
     p.stakeholders.filter((x) => x.type === ty).forEach((x) => rows.push([x.title, tv(lang, x.cat), peopleFor(p, x.id).map((q) => q.title).join(", "), String(risksFor(p, x.id).length)]));

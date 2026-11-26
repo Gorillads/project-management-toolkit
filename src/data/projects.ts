@@ -58,7 +58,7 @@ export function projectFromTemplate(templateId: string, lang: Lang, name?: strin
     budget: [], files: [], raci: [], raciPeople: [], swot: { s: [], w: [], o: [], t: [] },
     sDims: [...DEFAULT_S_DIMS], rDims: [...DEFAULT_R_DIMS], sCats: [...S_CATS], rCats: [...R_CATS], pGroups: [...P_GROUPS],
     analyses: defaultAnalyses(stakeholders, lang), lenses: defaultLenses(lang),
-    enabled: ["overview", "templates", ...tpl.tools],
+    enabled: [...DEFAULT_TOOLS],
   };
 }
 

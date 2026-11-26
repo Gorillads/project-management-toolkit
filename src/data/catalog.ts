@@ -39,44 +39,48 @@ export const ASSUMPTION_STATUSES = ["Unverified", "Confirmed", "At risk", "In ta
 export const TASK_COLS = ["todo", "doing", "done"];
 export const ENG_LEVELS = [L("Unaware", "Uvidende"), L("Resistant", "Modstander"), L("Neutral", "Neutral"), L("Supportive", "Støtter"), L("Leading", "Driver")];
 
-export type ToolGroup = "project" | "registers" | "planning" | "people" | "review";
+export type ToolGroup = "core" | "project" | "registers" | "planning" | "people" | "review";
 export interface ToolDef {
   id: string;
   group: ToolGroup;
   optional?: boolean;
 }
+/** The core (overview, actors, risks) is always on. Everything else is an
+ *  add-on a project switches on when it needs it. */
 export const TOOLS: ToolDef[] = [
-  { id: "overview", group: "project" },
-  { id: "templates", group: "project" },
-  { id: "charter", group: "project" },
-  { id: "stakeholders", group: "registers" },
-  { id: "risks", group: "registers" },
-  { id: "issues", group: "registers" },
-  { id: "decisions", group: "registers" },
+  { id: "overview", group: "core" },
+  { id: "actors", group: "core" },
+  { id: "risks", group: "core" },
+  { id: "stakeholders", group: "registers", optional: true },
+  { id: "riskanalysis", group: "registers", optional: true },
+  { id: "issues", group: "registers", optional: true },
+  { id: "decisions", group: "registers", optional: true },
   { id: "changes", group: "registers", optional: true },
-  { id: "wbs", group: "planning" },
-  { id: "schedule", group: "planning" },
-  { id: "board", group: "planning" },
-  { id: "budget", group: "planning" },
-  { id: "people", group: "people" },
-  { id: "raci", group: "people" },
-  { id: "engagement", group: "people" },
-  { id: "comms", group: "people" },
-  { id: "swot", group: "review" },
-  { id: "benefits", group: "review" },
-  { id: "lessons", group: "review" },
+  { id: "templates", group: "project", optional: true },
+  { id: "charter", group: "project", optional: true },
+  { id: "wbs", group: "planning", optional: true },
+  { id: "schedule", group: "planning", optional: true },
+  { id: "board", group: "planning", optional: true },
+  { id: "budget", group: "planning", optional: true },
+  { id: "people", group: "people", optional: true },
+  { id: "raci", group: "people", optional: true },
+  { id: "engagement", group: "people", optional: true },
+  { id: "comms", group: "people", optional: true },
+  { id: "swot", group: "review", optional: true },
+  { id: "benefits", group: "review", optional: true },
+  { id: "lessons", group: "review", optional: true },
 ];
-export const ALWAYS_ON = ["overview", "templates"];
-export const DEFAULT_TOOLS = TOOLS.filter((t) => !t.optional).map((t) => t.id);
+export const ALWAYS_ON = ["overview", "actors", "risks"];
+export const DEFAULT_TOOLS = [...ALWAYS_ON];
 
 /** Prefix → which collection holds that item, and which tool shows it. */
 export const PREFIX: Record<string, { coll: string; view: string }> = {
-  S: { coll: "stakeholders", view: "stakeholders" },
-  P: { coll: "people", view: "people" },
+  S: { coll: "stakeholders", view: "actors" },
+  P: { coll: "people", view: "actors" },
   R: { coll: "risks", view: "risks" },
   I: { coll: "issues", view: "issues" },
   D: { coll: "decisions", view: "decisions" },
-  A: { coll: "assumptions", view: "risks" },
+  A: { coll: "assumptions", view: "riskanalysis" },
   C: { coll: "changes", view: "changes" },
   M: { coll: "milestones", view: "schedule" },
   T: { coll: "tasks", view: "board" },

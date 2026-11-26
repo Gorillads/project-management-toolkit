@@ -11,12 +11,13 @@ import { NewProjectWizard } from "./components/NewProjectWizard";
 import { OverviewView, TemplatesView, CharterView, SwotView } from "./views/ProjectViews";
 import { StakeholdersView } from "./views/Stakeholders";
 import { RisksView } from "./views/Risks";
+import { ActorsView, RisksCoreView } from "./views/Core";
 import { IssuesView, DecisionsView, ChangesView, BenefitsView, LessonsView } from "./views/Registers";
 import { WbsView, ScheduleView, BoardView, BudgetView } from "./views/Planning";
 import { PeopleView, RaciView, EngagementView, CommsView } from "./views/PeopleViews";
 
 const VIEWS: Record<string, () => ReactNode> = {
-  overview: OverviewView, templates: TemplatesView, charter: CharterView, stakeholders: StakeholdersView, risks: RisksView,
+  overview: OverviewView, templates: TemplatesView, charter: CharterView, actors: ActorsView, stakeholders: StakeholdersView, risks: RisksCoreView, riskanalysis: RisksView,
   issues: IssuesView, decisions: DecisionsView, changes: ChangesView, wbs: WbsView, schedule: ScheduleView, board: BoardView,
   budget: BudgetView, people: PeopleView, raci: RaciView, engagement: EngagementView, comms: CommsView, swot: SwotView,
   benefits: BenefitsView, lessons: LessonsView,
@@ -121,7 +122,7 @@ export default function App() {
     return () => window.removeEventListener("hashchange", read);
   }, [go]);
   useEffect(() => { window.scrollTo({ top: 0 }); }, [ui.view, p.id]);
-  const view = VIEWS[ui.view] && (p.enabled.includes(ui.view) || ALWAYS_ON.includes(ui.view)) ? ui.view : "overview";
+  const view = VIEWS[ui.view] ? ui.view : "overview";
   const View = VIEWS[view];
   let g = "";
   return (
@@ -149,7 +150,7 @@ export default function App() {
             {TOOLS.filter((x) => ALWAYS_ON.includes(x.id) || p.enabled.includes(x.id)).map((x) => {
               const label = x.group !== g ? (g = x.group, <div key={"g" + x.group} className="nav-label">{T.groups[x.group]}</div>) : null;
               const count = x.id === "issues" ? p.issues.filter((i) => i.status !== "Closed").length
-                : x.id === "stakeholders" ? p.stakeholders.length : x.id === "risks" ? p.risks.length : x.id === "people" ? p.people.length : 0;
+                : x.id === "actors" ? p.stakeholders.length + p.people.length : x.id === "risks" ? p.risks.length : 0;
               return [label, (
                 <button key={x.id} type="button" className={"nav-btn" + (view === x.id ? " active" : "")} aria-current={view === x.id ? "page" : undefined} onClick={() => go(x.id)}>
                   <span>{T.tools[x.id]}</span>{count > 0 && <span className="count">{count}</span>}

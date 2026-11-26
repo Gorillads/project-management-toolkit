@@ -1,9 +1,9 @@
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { AnyItem, CollKey, Project } from "../model/types";
 import { useProject, useStore } from "../state/store";
 import { t, tv } from "../i18n";
 import { PREFIX } from "../data/catalog";
-import { COLLS, deleteItem, indexOf, refsOf, typeOf } from "../lib/links";
+import { COLLS, chooseId, cleanId, deleteItem, indexOf, isAutoId, kindOf, nextId, refsOf, renameId } from "../lib/links";
 
 export function useApp() {
   const p = useProject();
@@ -21,13 +21,12 @@ export const LinkIcon = () => (
 
 /** Jump from wherever you are to the item itself, in its own tool. */
 export function useGoto() {
-  const { go } = useApp();
+  const { go, p } = useApp();
   return (id: string) => {
-    const pre = typeOf(id);
+    const pre = kindOf(p, id);
     const v = PREFIX[pre]?.view;
     if (!v) return;
-    if (pre === "A") go("risks", id, { rSub: "assumptions" });
-    else if (pre === "R") go("risks", id, { rSub: "register", rMode: "one" });
+    if (pre === "A") go("riskanalysis", id, { rSub: "assumptions" });
     else go(v, id);
   };
 }
@@ -37,7 +36,7 @@ export function Chip({ id, full, onRemove }: { id: string; full?: boolean; onRem
   const goto = useGoto();
   const it = indexOf(p).all.get(id);
   if (!it) return null;
-  const pre = typeOf(id);
+  const pre = kindOf(p, id);
   const label = full ? `${id} ${it.title}` : pre === "S" || pre === "P" ? it.title : id;
   return (
     <span className={"link-chip" + (pre === "P" ? " is-person" : "")}>
@@ -83,7 +82,7 @@ export function LinkEditor({ ids, onChange, self }: { ids: string[]; onChange: (
 export function Backlinks({ id, skip = [] }: { id: string; skip?: string[] }) {
   const { p, T } = useApp();
   const groups: Record<string, string[]> = {};
-  for (const x of refsOf(p, id)) { const k = typeOf(x); if (!skip.includes(k)) (groups[k] ??= []).push(x); }
+  for (const x of refsOf(p, id)) { const k = kindOf(p, x); if (!skip.includes(k)) (groups[k] ??= []).push(x); }
   const keys = Object.keys(groups);
   if (!keys.length) return <div className="empty">{T.empty}</div>;
   return (
@@ -140,11 +139,15 @@ export function ItemEditor({ coll, item, fields }: { coll: CollKey; item: AnyIte
     update((p) => {
       const it = (p[coll] as AnyItem[]).find((x) => x.id === item.id) as unknown as Record<string, unknown>;
       if (!it) return;
-      if (v === "" && k !== "title") delete it[k]; else it[k] = v;
+      // Clearing a text field leaves an empty string; only a cleared
+      // reference (owner, decided by…) is removed, since "" is not an ID.
+      const isRef = fields.find((f) => f.k === k)?.type === "ref";
+      if (v === "" && isRef) delete it[k]; else it[k] = v;
     });
   const rec = item as unknown as Record<string, unknown>;
   return (
     <div className="editor">
+      <IdField coll={coll} id={item.id} />
       {fields.map((f) => {
         const fid = `f-${item.id}-${f.k}`;
         const v = rec[f.k];
@@ -181,3 +184,54 @@ export function useSelected<K extends CollKey>(coll: K): Project[K][number] | un
 }
 
 export const rowClass = (sel: boolean, flash: boolean) => (sel ? "selected" : "") + (flash ? " flash" : "");
+
+/** Add a new item: an optional ID (left empty, the next free one is used)
+ *  and its name. Enter in either field adds it. */
+export function AddRow({ coll, namePh, onAdd, label }: { coll: CollKey; namePh: string; label: string; onAdd: (id: string, title: string) => void }) {
+  const { p, T } = useApp();
+  const [id, setId] = useState("");
+  const [title, setTitle] = useState("");
+  const [err, setErr] = useState("");
+  const auto = nextId(p, coll);
+  const add = () => {
+    const chosen = chooseId(p, coll, id);
+    if (!chosen) { setErr(T.idTaken); return; }
+    onAdd(chosen, title.trim());
+    setId(""); setTitle(""); setErr("");
+  };
+  const key = (e: React.KeyboardEvent) => { if (e.key === "Enter") { e.preventDefault(); add(); } };
+  return (
+    <div className="add-row">
+      <input className={"input id-in" + (err ? " invalid" : "")} aria-label={T.idLabel} placeholder={auto} value={id} title={T.idHint} onChange={(e) => { setId(e.target.value); setErr(""); }} onKeyDown={key} />
+      <input className="input grow" aria-label={namePh} placeholder={namePh} value={title} onChange={(e) => setTitle(e.target.value)} onKeyDown={key} />
+      <button type="button" className="btn small" onClick={add}>+ {label}</button>
+      {err && <span className="err small" role="alert">{err}</span>}
+    </div>
+  );
+}
+
+/** Edit an item's ID. Empty means "pick one for me"; a new ID is carried
+ *  into every link that points at the item. */
+export function IdField({ coll, id }: { coll: CollKey; id: string }) {
+  const { p, T, update, ui, setUi } = useApp();
+  const [v, setV] = useState(id);
+  const [err, setErr] = useState("");
+  useEffect(() => { setV(id); setErr(""); }, [id]);
+  const commit = () => {
+    const typed = cleanId(v);
+    let to = typed;
+    if (!typed) to = isAutoId(id, coll) ? id : nextId(p, coll);
+    if (to === id) { setV(id); return; }
+    if (indexOf(p).all.has(to)) { setErr(T.idTaken); return; }
+    update((d) => renameId(d, id, to));
+    setUi({ sel: { ...ui.sel, [ui.view]: to } });
+  };
+  return (
+    <div className="field-row">
+      <label htmlFor={`id-${id}`}>{T.idLabel}</label>
+      <input id={`id-${id}`} className={"input id-in" + (err ? " invalid" : "")} value={v} placeholder={nextId(p, coll)} onChange={(e) => { setV(e.target.value); setErr(""); }}
+        onBlur={commit} onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") { setV(id); setErr(""); } }} />
+      <span className={err ? "err small" : "muted small"} role={err ? "alert" : undefined}>{err || T.idHint}</span>
+    </div>
+  );
+}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PREFIX } from "../data/catalog";
-import { indexOf, typeOf } from "../lib/links";
+import { indexOf, kindOf } from "../lib/links";
 import { useApp, useGoto } from "./ui";
 
 /** One box that finds any item in the project, by ID or by words in its
@@ -51,7 +51,7 @@ export function Search() {
           {results.map((r, i) => (
             <button key={r.id} type="button" role="option" aria-selected={i === hi} className={"menu-item search-row" + (i === hi ? " hi" : "")} onMouseEnter={() => setHi(i)} onClick={() => pick(r.id)}>
               <span><span className="id">{r.id}</span> {r.title || "…"}</span>
-              <small>{typeOf(r.id) === "A" ? T.assumptions : T.tools[PREFIX[typeOf(r.id)].view]}</small>
+              <small>{kindOf(p, r.id) === "A" ? T.assumptions : T.tools[PREFIX[kindOf(p, r.id)].view]}</small>
             </button>
           ))}
         </div>

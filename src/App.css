@@ -398,3 +398,27 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
   .wz-line > .icon-x { grid-column: 2; grid-row: 1; }
   .wz-line { padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 }
+
+/* core: add rows, add-ons */
+.add-card { display: flex; flex-direction: column; gap: 8px; }
+.add-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.add-row .grow { min-width: 180px; }
+.id-in { width: 92px; font-family: var(--mono); font-size: 12.5px; flex: none; }
+.err { color: var(--danger); }
+.type-team { background: var(--ok-wash); color: var(--ok); border: none; }
+.purpose-input { width: min(100%, 720px); resize: vertical; margin-top: 4px; line-height: 1.45; }
+.stat-btn { text-align: left; cursor: pointer; }
+.stat-btn:hover { border-color: var(--accent); }
+.addons { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; margin-top: 10px; }
+.addon { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; }
+.addon.on { border-color: var(--accent); background: var(--accent-wash); }
+.addon b { font-size: 13.5px; }
+.addon p { margin: 3px 0 0; font-size: 12.5px; color: var(--text-soft); line-height: 1.4; }
+.dash-tile { cursor: default; }
+.tile-open { border: none; background: none; padding: 0; text-align: left; display: flex; flex-direction: column; gap: 5px; cursor: pointer; }
+.dash-tile .link-btn { margin-top: 4px; }
+.wz-head.people, .wz-line.people { grid-template-columns: 92px 1fr 1fr 170px 28px; }
+.wz-mit { margin-left: 24px; width: calc(100% - 24px); }
+.wz-ids { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+@media (max-width: 760px) { .wz-line.people > .id-in { grid-column: 1; } }
+.type-contact { border: 1px dashed var(--ok); color: var(--ok); }

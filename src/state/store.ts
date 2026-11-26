@@ -71,6 +71,32 @@ function remember(id: string, prev: Project) {
   future.set(id, []);
 }
 
+/** Make stored data safe to render: every item gets the text fields and
+ *  lists the views expect, whatever an older version or an import left. */
+export function repairProject(p: Project): Project {
+  const str = (o: Record<string, unknown>, ks: string[]) => ks.forEach((k) => { if (typeof o[k] !== "string") o[k] = o[k] == null ? "" : String(o[k]); });
+  const need: Record<string, string[]> = {
+    stakeholders: ["title", "cat", "type", "org", "need"], people: ["title", "role", "group", "org", "resp"], risks: ["title", "cat", "mit", "status"],
+    issues: ["title", "prio", "status"], decisions: ["title", "date"], assumptions: ["title", "kind", "status"], changes: ["title", "status"],
+    milestones: ["title", "date"], tasks: ["title", "col"], benefits: ["title", "kpi"], lessons: ["title", "source"], wbs: ["title", "code"],
+  };
+  for (const [c, ks] of Object.entries(need)) {
+    const list = (p as unknown as Record<string, unknown>)[c];
+    if (!Array.isArray(list)) { (p as unknown as Record<string, unknown>)[c] = []; continue; }
+    for (const it of list as Record<string, unknown>[]) {
+      if (typeof it.id !== "string") it.id = String(it.id ?? "");
+      str(it, ks);
+      if (!Array.isArray(it.links)) it.links = [];
+      if ((c === "stakeholders" || c === "risks") && (typeof it.sc !== "object" || !it.sc)) it.sc = {};
+    }
+  }
+  p.charter ??= { purpose: "", inScope: "", outScope: "", budgetNote: "", goLive: "", links: [] };
+  p.enabled ??= ["overview", "actors", "risks"];
+  for (const k of ["budget", "files", "raci", "raciPeople", "analyses", "lenses", "sDims", "rDims", "sCats", "rCats", "pGroups"] as const) if (!Array.isArray(p[k])) (p as unknown as Record<string, unknown>)[k] = [];
+  p.swot ??= { s: [], w: [], o: [], t: [] };
+  return p;
+}
+
 const firstUi: UiState = { view: "overview", sel: {}, sMode: "list", sCur: "pi", rMode: "one", rSub: "register", rCur: "pxi" };
 const ex = exampleProject();
 
@@ -150,7 +176,22 @@ export const useStore = create<AppStore>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 1,
+      version: 2,
+      // v2: the app starts simple. Existing projects keep all their data but
+      // show only the core tools until add-ons are switched on again.
+      migrate: (state, version) => {
+        const s = state as { projects?: Record<string, Project> };
+        if (version < 2 && s.projects) for (const p of Object.values(s.projects)) p.enabled = ["overview", "actors", "risks"];
+        return s as never;
+      },
+      // Runs on every load, after any migration.
+      merge: (persisted, current) => {
+        const s = { ...current, ...(persisted as Partial<AppStore>) };
+        for (const p of Object.values(s.projects ?? {})) repairProject(p);
+        if (!s.projects[s.activeId]) s.activeId = s.order.find((id) => s.projects[id]) ?? Object.keys(s.projects)[0];
+        s.order = s.order.filter((id) => s.projects[id]);
+        return s;
+      },
       storage: createJSONStorage(() => safeStorage),
       partialize: (s) => ({ lang: s.lang, projects: s.projects, order: s.order, activeId: s.activeId,
         ui: { ...s.ui, flash: undefined } }),

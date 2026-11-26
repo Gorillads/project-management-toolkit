@@ -48,6 +48,23 @@ export class ErrorBoundary extends Component<Props, State> {
           den er stadig der, den kunne bare ikke vises lige nu.
         </p>
         <p>Send venligst et skærmbillede af hele denne side, så den kan blive rettet.</p>
+        <p>
+          <button
+            type="button"
+            style={{ font: "inherit", padding: "6px 14px", borderRadius: 6, border: "1px solid #416180", background: "#416180", color: "#fff", cursor: "pointer" }}
+            onClick={() => {
+              // Leave the page that crashed: open the overview instead.
+              try {
+                const raw = localStorage.getItem("project-toolkit-v1");
+                if (raw) { const d = JSON.parse(raw); if (d.state?.ui) { d.state.ui.view = "overview"; d.state.ui.sel = {}; } localStorage.setItem("project-toolkit-v1", JSON.stringify(d)); }
+              } catch { /* nothing to reset */ }
+              location.hash = "";
+              location.reload();
+            }}
+          >
+            Gå til overblikket
+          </button>
+        </p>
         <pre
           style={{
             whiteSpace: "pre-wrap",

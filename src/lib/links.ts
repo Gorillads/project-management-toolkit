@@ -1,8 +1,15 @@
 import type { AnyItem, CollKey, Lang, Project, Risk } from "../model/types";
-import { COLL_PREFIX, PREFIX } from "../data/catalog";
+import { COLL_PREFIX } from "../data/catalog";
 
 export const COLLS: CollKey[] = ["stakeholders", "people", "risks", "issues", "decisions", "assumptions", "changes", "milestones", "tasks", "benefits", "lessons", "wbs"];
+/** Fallback for IDs not in the project (yet): the letters before the number. */
 export const typeOf = (id: string) => id.replace(/\d+$/, "");
+/** Which register an ID belongs to, as its prefix letter (S, P, R…). IDs can
+ *  be anything the user types, so this asks the index, not the ID's text. */
+export const kindOf = (p: Project, id: string) => {
+  const c = indexOf(p).all.get(id)?.coll;
+  return c ? COLL_PREFIX[c] : typeOf(id);
+};
 
 export interface Index {
   all: Map<string, { id: string; title: string; coll: CollKey; item: AnyItem }>;
@@ -36,18 +43,49 @@ export function indexOf(p: Project): Index {
 }
 const byNum = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true });
 export const refsOf = (p: Project, id: string, type?: string) =>
-  [...(indexOf(p).refs.get(id) ?? [])].filter((x) => !type || typeOf(x) === type).sort(byNum);
+  [...(indexOf(p).refs.get(id) ?? [])].filter((x) => !type || kindOf(p, x) === type).sort(byNum);
 export const titleOf = (p: Project, id?: string) => (id ? indexOf(p).all.get(id)?.title ?? "" : "");
 
 export function nextId(p: Project, coll: CollKey): string {
   const pre = COLL_PREFIX[coll];
-  const max = (p[coll] as AnyItem[]).reduce((m, it) => Math.max(m, parseInt(it.id.slice(pre.length)) || 0), 0);
-  return pre + (max + 1);
+  const max = (p[coll] as AnyItem[]).reduce((m, it) => Math.max(m, it.id.startsWith(pre) ? parseInt(it.id.slice(pre.length)) || 0 : 0), 0);
+  const all = indexOf(p).all;
+  let n = max + 1;
+  while (all.has(pre + n)) n++;
+  return pre + n;
+}
+export const isAutoId = (id: string, coll: CollKey) => new RegExp(`^${COLL_PREFIX[coll]}\\d+$`).test(id);
+export const cleanId = (s: string) => s.trim().replace(/\s+/g, "-").replace(/[^\p{L}\p{N}._-]/gu, "").slice(0, 24);
+
+/** The ID to use for a new item: what the user typed, or the next free one
+ *  when the field was left empty. Returns null if the typed ID is taken. */
+export function chooseId(p: Project, coll: CollKey, typed: string): string | null {
+  const id = cleanId(typed);
+  if (!id) return nextId(p, coll);
+  return indexOf(p).all.has(id) ? null : id;
+}
+
+/** Give an item a new ID and update every reference to it. */
+export function renameId(p: Project, from: string, to: string) {
+  if (!to || from === to) return;
+  const swapAll = (xs: string[]) => xs.map((x) => (x === from ? to : x));
+  for (const c of COLLS) for (const it of p[c] as AnyItem[]) {
+    if (it.id === from) it.id = to;
+    it.links = swapAll(it.links);
+    const r = it as unknown as Record<string, unknown>;
+    for (const k of ["owner", "by", "from", "stakeholder"]) if (r[k] === from) r[k] = to;
+  }
+  p.charter.links = swapAll(p.charter.links);
+  p.budget.forEach((b) => (b.links = swapAll(b.links)));
+  (["s", "w", "o", "t"] as const).forEach((k) => p.swot[k].forEach((x) => (x.links = swapAll(x.links))));
+  p.analyses.forEach((a) => (a.ids = swapAll(a.ids)));
+  p.raciPeople = swapAll(p.raciPeople);
+  p.raci.forEach((r) => { if (from in r.a) { r.a[to] = r.a[from]; delete r.a[from]; } });
 }
 
 /** Remove an item and every reference to it, wherever it was linked. */
 export function deleteItem(p: Project, id: string) {
-  const coll = PREFIX[typeOf(id)]?.coll as CollKey | undefined;
+  const coll = indexOf(p).all.get(id)?.coll;
   if (!coll) return;
   (p[coll] as AnyItem[]) = (p[coll] as AnyItem[]).filter((x) => x.id !== id);
   for (const c of COLLS) for (const it of p[c] as AnyItem[]) {
