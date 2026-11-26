@@ -568,3 +568,28 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
 .owner-chip .star { color: #c58a00; font-size: 12px; }
 .risk-table .owner-chip .link-chip { max-width: 112px; }
 .risk-table .owner-chip .link-chip > button:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Arrangeable panels (Board) */
+.board { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.board-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: -6px; }
+.board-bar .hidden-list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-right: auto; }
+.board-bar .split-pick { display: inline-flex; align-items: center; gap: 6px; }
+.arrange-hint { margin-top: -6px; }
+.board-sec { display: grid; gap: 16px; align-items: start; }
+.board-sec.single { grid-template-columns: minmax(0, 1fr); }
+.board-full { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.panel { min-width: 0; display: flex; flex-direction: column; }
+.panel > * { min-width: 0; max-width: 100%; }
+.panel > .card, .panel > details, .panel > .stack { margin: 0; }
+.panel.arranging { outline: 2px dashed var(--border); outline-offset: 4px; border-radius: 8px; }
+.panel.dragging { opacity: .45; }
+.panel.drop-before { box-shadow: 0 -4px 0 var(--accent); }
+.panel-bar { display: flex; align-items: center; gap: 6px; padding: 6px 8px; margin-bottom: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); cursor: grab; font-size: 13px; }
+.panel-bar .grip { color: var(--muted); font-size: 16px; }
+.seg.tiny button { padding: 3px 8px; font-size: 13px; }
+.drop-end { border: 2px dashed var(--border); border-radius: 8px; padding: 8px; text-align: center; color: var(--muted); font-size: 13px; }
+.drop-end.on { border-color: var(--accent); color: var(--accent); }
+@media (max-width: 1080px) { .board-sec { grid-template-columns: minmax(0, 1fr) !important; } }
+.drop-end.active { padding: 14px; }
+.add-row { flex-wrap: wrap; }
+.add-row .btn { white-space: normal; text-align: left; max-width: 100%; }

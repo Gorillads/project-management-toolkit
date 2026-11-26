@@ -8,6 +8,7 @@ import { QualityTriangle, RiskHeat, StakeholderGrid } from "../components/Charts
 import { looksLikeConsequence } from "../lib/riskText";
 import { groupOpts, opts } from "./Registers";
 import { CategoryEditor } from "../components/CategoryEditor";
+import { Board } from "../components/Board";
 
 /** The core charts always cover every stakeholder and every risk. */
 export const coreAnalysis = (p: Project, T: Dict): Analysis => ({
@@ -95,7 +96,8 @@ export function ActorsView() {
   return (
     <>
       <ViewHead id="actors" />
-      <div className="card add-card">
+      <Board view="actors" split="3:2" panels={[
+      { id: "add", title: T.layout.p.add, col: "F", node: <div className="card add-card">
         <AddRow coll="people" label={T.addTeamMember} namePh={T.personPh} onAdd={(id, title) => {
           update((d) => { d.people.push({ id, title, role: "", group: "", org: d.org, resp: "", links: [] }); });
           pick(id);
@@ -116,9 +118,8 @@ export function ActorsView() {
             <CategoryEditor kind="sCats" title={T.stakeholderGroups} />
           </div>
         </details>
-      </div>
-      <div className="grid-2">
-        <div className="card">
+      </div> },
+      { id: "list", title: T.layout.p.list, col: "L", node: <div className="card">
           <div className="card-head">
             <div className="seg small">
               {([["all", T.all, p.people.length + p.stakeholders.length], ["team", T.teamMembers, p.people.length], ["stake", T.stakeholdersWord, p.stakeholders.length]] as const).map(([k, l, n]) => (
@@ -138,12 +139,10 @@ export function ActorsView() {
               ))}</tbody>
             </table></div>
           )}
-        </div>
-        <div className="stack">
-          <div className="card">{person ? <PersonDetail x={person} /> : stake ? <StakeholderDetail s={stake} /> : <div className="empty">{T.selectHint}</div>}</div>
-          <div className="card"><h3>{T.powerInterest}</h3><StakeholderGrid a={coreAnalysis(p, T)} selected={selId} onPick={pick} /><p className="muted small">{T.splitNote}</p></div>
-        </div>
-      </div>
+        </div> },
+      { id: "details", title: T.layout.p.details, col: "R", node: <div className="card">{person ? <PersonDetail x={person} /> : stake ? <StakeholderDetail s={stake} /> : <div className="empty">{T.selectHint}</div>}</div> },
+      { id: "grid", title: T.powerInterest, col: "R", node: <div className="card"><h3>{T.powerInterest}</h3><StakeholderGrid a={coreAnalysis(p, T)} selected={selId} onPick={pick} /><p className="muted small">{T.splitNote}</p></div> },
+      ]} />
     </>
   );
 }
@@ -180,7 +179,8 @@ export function RisksCoreView() {
   return (
     <>
       <ViewHead id="risks" />
-      <div className="card add-card">
+      <Board view="risks" split="2:1" panels={[
+      { id: "add", title: T.layout.p.add, col: "F", node: <div className="card add-card">
         <AddRow coll="risks" label={T.addRiskBtn} namePh={T.riskPh} onAdd={(id, title) => {
           update((d) => { d.risks.push({ id, title, cat: "", cause: "", consequence: "", mit: "", status: "Open", owners: [], links: [], sc: { ...Object.fromEntries(d.rDims.map((x) => [x.id, 3])), fin: 0, sched: 0, res: 0 } }); });
           pick(id);
@@ -190,9 +190,8 @@ export function RisksCoreView() {
           <p className="muted small">{T.catHint}</p>
           <CategoryEditor kind="rCats" title={T.riskCats} />
         </details>
-      </div>
-      <div className="grid-2 risks-grid">
-        <div className="card">
+      </div> },
+      { id: "table", title: T.layout.p.table, col: "L", node: <div className="card">
           {sorted.length === 0 ? <div className="empty">{T.noRisksYet}</div> : (
             <div className="scroll-x"><table className="risk-table">
               <thead>
@@ -218,9 +217,8 @@ export function RisksCoreView() {
             </table></div>
           )}
           <p className="muted small">{T.moreAnalysis}</p>
-        </div>
-        <div className="stack">
-          <div className="card">
+        </div> },
+      { id: "details", title: T.layout.p.details, col: "R", node: <div className="card">
             {sel ? (
               <div className="detail">
                 <div><span className="id">{sel.id}{sel.cat ? " · " + tv(lang, sel.cat) : ""}</span><h4>{sel.title || "…"}</h4></div>
@@ -235,11 +233,10 @@ export function RisksCoreView() {
                 <ItemEditor coll="risks" item={sel} fields={fields} />
               </div>
             ) : <div className="empty">{T.selectHint}</div>}
-          </div>
-          <div className="card"><h3>{T.tri.title}</h3><p className="muted small m0">{T.tri.hint}</p><QualityTriangle selected={selId} onPick={pick} /></div>
-          <div className="card"><h3>{T.riskMap}</h3><RiskHeat l={coreLens(p, T)} selected={selId} onPick={pick} /></div>
-        </div>
-      </div>
+          </div> },
+      { id: "triangle", title: T.tri.title, col: "R", node: <div className="card"><h3>{T.tri.title}</h3><p className="muted small m0">{T.tri.hint}</p><QualityTriangle selected={selId} onPick={pick} /></div> },
+      { id: "heat", title: T.riskMap, col: "R", node: <div className="card"><h3>{T.riskMap}</h3><RiskHeat l={coreLens(p, T)} selected={selId} onPick={pick} /></div> },
+      ]} />
     </>
   );
 }

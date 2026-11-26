@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Board } from "../components/Board";
 import type { SwotItem } from "../model/types";
 import { tv } from "../i18n";
 import { ALWAYS_ON, TOOLS } from "../data/catalog";
@@ -80,7 +81,8 @@ export function OverviewView() {
         </div>
       </div>
       {p.id === "example" && <div className="card small note">{T.exampleNote}</div>}
-      {(() => {
+      <Board view="overview" split="1:1" panels={[
+      { id: "checklist", title: T.layout.p.checklist, col: "F", node: (() => {
         const steps = readiness(p);
         const done = steps.filter((x) => x.done).length;
         return (
@@ -104,8 +106,8 @@ export function OverviewView() {
             </ol>
           </div>
         );
-      })()}
-      <div className="card pu-summary">
+      })() },
+      { id: "summary", title: T.layout.p.summary, col: "F", node: <div className="card pu-summary">
         <div className="card-head"><h3>{T.tools.purpose}</h3><button type="button" className="btn ghost small" onClick={() => go("purpose")}>{T.open}</button></div>
         <div className="pu-sum-grid">
           {([[p.goals.length, T.pu.goals, "↑ " + T.pu.why], [p.criteria.length, T.pu.criteria, ""], [p.deliverables.length, T.pu.deliverables, "↓ " + T.pu.how]] as const).map(([n, l, hint]) => (
@@ -115,19 +117,17 @@ export function OverviewView() {
             <button type="button" className="stat stat-btn" onClick={() => go("purpose")}><div className={"v" + (g.length ? " bad" : " good")}>{g.length}</div><div className="l">{T.pu.gaps}</div></button>
           ); })()}
         </div>
-      </div>
-      <div className="two">
-        <div className="card"><div className="card-head"><h3>{T.powerInterest}</h3><button type="button" className="btn ghost small" onClick={() => go("actors")}>{T.open}</button></div><StakeholderGrid a={coreAnalysis(p, T)} mini /></div>
-        <div className="card"><div className="card-head"><h3>{T.riskMap}</h3><button type="button" className="btn ghost small" onClick={() => go("risks")}>{T.open}</button></div><RiskHeat l={coreLens(p, T)} /></div>
-      </div>
-      {p.risks.some((r) => r.links.length) && (
+      </div> },
+      { id: "pi", title: T.powerInterest, col: "L", node: <div className="card"><div className="card-head"><h3>{T.powerInterest}</h3><button type="button" className="btn ghost small" onClick={() => go("actors")}>{T.open}</button></div><StakeholderGrid a={coreAnalysis(p, T)} mini /></div> },
+      { id: "heat", title: T.riskMap, col: "R", node: <div className="card"><div className="card-head"><h3>{T.riskMap}</h3><button type="button" className="btn ghost small" onClick={() => go("risks")}>{T.open}</button></div><RiskHeat l={coreLens(p, T)} /></div> },
+      { id: "network", title: T.network, col: "F", show: p.risks.some((r) => r.links.length), node: (
         <div className="card">
           <div className="card-head"><div><h3>{T.network}</h3><p className="muted small m0">{T.networkHint}</p></div>
             <div className="ctrl"><label htmlFor="netcat">{T.showStakeholders}</label><select id="netcat" className="sel" value={cat} onChange={(e) => setCat(e.target.value)}><option value="">{T.allGroups}</option>{p.sCats.map((c) => <option key={c} value={c}>{tv(lang, c)}</option>)}</select></div></div>
           <div className="scroll-x"><Network cat={cat} /></div>
         </div>
-      )}
-      {extraPinned.length > 0 && (
+      ) },
+      { id: "pinned", title: T.layout.p.pinned, col: "F", show: extraPinned.length > 0, node: (
         <div className="card">
           <div className="card-head"><h3>{T.pinned}</h3><span className="muted small">{T.pinHint}</span></div>
           <div className="compare">
@@ -136,8 +136,8 @@ export function OverviewView() {
               : <div key={x.id} className="card mini"><div className="card-head"><h3>{x.name}</h3><button type="button" className="btn ghost small" onClick={() => { setUi({ rCur: x.id, rMode: "one", rSub: "register" }); go("riskanalysis"); }}>{T.open}</button></div><RiskHeat l={x} /></div>)}
           </div>
         </div>
-      )}
-      {added.length > 0 && (
+      ) },
+      { id: "added", title: T.layout.p.added, col: "F", show: added.length > 0, node: (
         <div className="card">
           <h3>{T.addedTools}</h3>
           <div className="dash">
@@ -149,8 +149,8 @@ export function OverviewView() {
             ))}
           </div>
         </div>
-      )}
-      <div className="card">
+      ) },
+      { id: "addTools", title: T.layout.p.addTools, col: "F", node: <div className="card">
         <h3>{T.addTools}</h3>
         <p className="muted small m0">{T.addToolsHint}</p>
         <div className="sub-h">{T.dev.shapeTools}</div>
@@ -165,7 +165,8 @@ export function OverviewView() {
           <p className="muted small">{T.dev.runNote}</p>
           <div className="addons">{addons.filter((t) => t.phase === "run").map(addonCard)}</div>
         </details>
-      </div>
+      </div> },
+      ]} />
     </>
   );
 }

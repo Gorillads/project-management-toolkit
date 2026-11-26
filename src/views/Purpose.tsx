@@ -1,4 +1,5 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Board } from "../components/Board";
 import type { Criterion, Deliverable, Goal, Project } from "../model/types";
 import { tv, type Dict } from "../i18n";
 import { CRITERION_STATUSES, DELIVERABLE_STATUSES } from "../data/catalog";
@@ -275,15 +276,16 @@ export function PurposeView() {
   return (
     <>
       <ViewHead id="purpose" />
-      {empty ? <div className="card">{example}</div> : <details className="pu-ex-details"><summary>{U.exShow}</summary><div className="card">{example}</div></details>}
-      <div className="card add-card">
+      <Board view="purpose" split="1:1" panels={[
+      { id: "example", title: T.layout.p.example, col: "F", node: empty ? <div className="card">{example}</div> : <details className="pu-ex-details"><summary>{U.exShow}</summary><div className="card">{example}</div></details> },
+      { id: "add", title: T.layout.p.add, col: "F", node: <div className="card add-card">
         <AddRow coll="goals" label={goalLabel} namePh={tops.length ? U.goalPh : U.purposePh} onAdd={(id, t) => { update((d) => { d.goals.push({ id, title: t, links: [], ...(goalParent && tops.length ? { parent: goalParent } : {}) }); }); select(id); }} />
         <AddRow coll="criteria" label={critLabel} namePh={U.criterionPh}
           onAdd={(id, t) => { update((d) => { d.criteria.push({ id, title: t, target: "", status: "Draft", serves: !critParent && critFor ? [critFor] : [], links: [], ...(critParent ? { parent: critParent } : {}) }); }); select(id); }} />
         <AddRow coll="deliverables" label={delLabel} namePh={U.deliverablePh}
           onAdd={(id, t) => { update((d) => { d.deliverables.push({ id, title: t, status: "Draft", serves: !delParent && delFor ? [delFor] : [], links: [], ...(delParent ? { parent: delParent } : {}) }); }); select(id); }} />
-      </div>
-      <div className="card pu-card">
+      </div> },
+      { id: "diagram", title: T.layout.p.diagram, col: "F", node: <div className="card pu-card">
         <div className="pu-wrap">
           <div className="pu-diagram" ref={box}>
             <svg className="pu-lines" aria-hidden="true">
@@ -306,10 +308,9 @@ export function PurposeView() {
             <span className="pu-why">{U.why}</span><span className="pu-arrow up" /><span className="pu-arrow down" /><span className="pu-how">{U.how}</span>
           </div>
         </div>
-      </div>
-      <div className="grid-2">
-        <div className="card">{editor}</div>
-        <div className="card">
+      </div> },
+      { id: "editor", title: T.layout.p.editor, col: "L", node: <div className="card">{editor}</div> },
+      { id: "check", title: T.layout.p.check, col: "R", node: <div className="card">
           <h3>{U.check} · {found.length}</h3>
           {found.length === 0 ? <p className="ok-note">{U.allGood}</p> : (
             <ul className="gap-list">
@@ -320,8 +321,8 @@ export function PurposeView() {
               ))}
             </ul>
           )}
-        </div>
-      </div>
+        </div> },
+      ]} />
     </>
   );
 }

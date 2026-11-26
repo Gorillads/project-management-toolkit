@@ -28,7 +28,12 @@ export interface UiState {
   rMode: "one" | "compare";
   rSub: "register" | "assumptions";
   rCur: string;
+  /** How the user arranged each tab's panels (see components/Board). */
+  layouts?: Record<string, Layout>;
 }
+export type Col = "L" | "R" | "F";
+export interface Layout { items: { id: string; col: Col }[]; hidden: string[]; split?: Split }
+export type Split = "1:1" | "2:1" | "3:2" | "1:2";
 
 interface AppStore {
   lang: Lang;

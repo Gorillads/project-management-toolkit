@@ -28,6 +28,16 @@ Each step shows how far it is (e.g. 3/5) and jumps to the first gap.
 Success criteria and deliverables are marked Draft or Agreed while the project
 is shaped; progress tracking belongs to the later management phase.
 
+## Arrange each tab
+
+Every core tab (Overview, Purpose & success, Actors, Risks) is made of
+panels. Click **Arrange** at the top of a tab to drag a panel by its bar or
+move it with the arrows, put it in the left column, the right column or the
+full width, hide it, or change how wide the two columns are. Hidden panels
+are listed at the top of the tab and come back with one click. **Reset
+layout** restores the default. The layout is remembered per tab in this
+browser.
+
 ## Start simple, add as you go
 
 Every project starts with the **core**:
