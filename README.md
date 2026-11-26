@@ -42,6 +42,29 @@ Each project chooses which tools it uses in the tool library on the Overview.
   The Decision log shows which typical decisions are made and which are
   still ahead.
 
+## Starting a project
+
+The **+** in the tab bar opens a guided setup that asks, one topic at a time:
+
+1. **Project type**: ERP rollout, app launch, organisational restructuring,
+   office or warehouse move, or physical product launch.
+2. **The basics**: name, organisation, purpose, start date, go-live date and budget.
+3. **Scope and success**: what is in and out, and measurable success criteria.
+4. **People**: project manager, sponsor and core team, with roles and responsibilities.
+5. **Stakeholders**: the type's typical stakeholders, prefilled. Untick, rename or
+   add, and rate power and interest.
+6. **Risks**: the type's typical risks, prefilled. Rate probability and impact,
+   pick an owner and tick the stakeholders each risk affects.
+7. **Plan**: one decision gate per phase, spread between start and go-live.
+8. **Tools**: the type's recommended tools are ticked.
+9. **Review**, then create.
+
+The answers become a linked project: people own risks, risks link to the
+stakeholders they affect, each phase becomes a work package and a milestone on
+the schedule, and the charter, budget and success criteria are filled in.
+Unfinished answers are kept if the dialog is closed. "Project templates" also
+starts the setup with a type already chosen.
+
 ## Working in it
 
 - **Search** (Ctrl+K) finds any item by ID or words in its title, role,

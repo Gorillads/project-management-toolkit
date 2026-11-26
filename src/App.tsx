@@ -3,12 +3,11 @@ import "./App.css";
 import { MAX_PROJECTS, useProject, useStore } from "./state/store";
 import { t } from "./i18n";
 import { ALWAYS_ON, TOOLS } from "./data/catalog";
-import { TEMPLATES } from "./data/templates";
-import { exampleProject } from "./data/projects";
 import { buildDeck, downloadBlob, importCsv, parseProjectJson, projectCsv, projectJson } from "./lib/exporters";
 import { slug } from "./views/Planning";
 import { Search } from "./components/Search";
 import { Guide } from "./components/Guide";
+import { NewProjectWizard } from "./components/NewProjectWizard";
 import { OverviewView, TemplatesView, CharterView, SwotView } from "./views/ProjectViews";
 import { StakeholdersView } from "./views/Stakeholders";
 import { RisksView } from "./views/Risks";
@@ -25,9 +24,8 @@ const VIEWS: Record<string, () => ReactNode> = {
 const REPO = "https://github.com/Gorillads/project-management-toolkit";
 
 function TabBar({ onHelp }: { onHelp: () => void }) {
-  const { lang, projects, order, activeId, setActive, close, duplicate, newFromTemplate, addProject } = useStore();
+  const { lang, projects, order, activeId, setActive, close, duplicate, openWizard } = useStore();
   const T = t(lang);
-  const [open, setOpen] = useState(false);
   const full = order.length >= MAX_PROJECTS;
   return (
     <div className="tab-bar">
@@ -42,15 +40,7 @@ function TabBar({ onHelp }: { onHelp: () => void }) {
       <div className="tab-actions">
         <button type="button" className="icon-btn" title={T.help} aria-label={T.help} onClick={onHelp}>?</button>
         <button type="button" className="icon-btn" title={T.duplicate} aria-label={T.duplicate} disabled={full} onClick={duplicate}>⧉</button>
-        <div className="menu">
-          <button type="button" className="icon-btn" title={T.newProject} aria-label={T.newProject} aria-expanded={open} disabled={full} onClick={() => setOpen(!open)}>+</button>
-          {open && (
-            <div className="menu-pop" onMouseLeave={() => setOpen(false)}>
-              {TEMPLATES.map((tp) => <button key={tp.id} type="button" className="menu-item" onClick={() => { newFromTemplate(tp.id, tp.name[lang]); setOpen(false); }}><span>{tp.name[lang]}</span><small>{tp.desc[lang]}</small></button>)}
-              <button type="button" className="menu-item" onClick={() => { addProject(exampleProject()); setOpen(false); }}><span>{T.exampleNote.split(".")[0]}</span><small>ERP rollout</small></button>
-            </div>
-          )}
-        </div>
+        <button type="button" className="icon-btn" title={T.newProject} aria-label={T.newProject} disabled={full} onClick={() => openWizard()}>+</button>
       </div>
     </div>
   );
@@ -109,7 +99,7 @@ export default function App() {
   const go = useStore((s) => s.go);
   const p = useProject();
   const T = t(lang);
-  const { undo, redo, canUndo, canRedo } = useStore();
+  const { undo, redo, canUndo, canRedo, wizard, closeWizard } = useStore();
   const [guide, setGuide] = useState(() => { try { return !localStorage.getItem("pmt-guide-seen"); } catch { return false; } });
   const closeGuide = () => { setGuide(false); try { localStorage.setItem("pmt-guide-seen", "1"); } catch { /* private mode */ } };
   useEffect(() => {
@@ -138,6 +128,7 @@ export default function App() {
     <div className="app">
       <TabBar onHelp={() => setGuide(true)} />
       <Guide open={guide} onClose={closeGuide} />
+      <NewProjectWizard open={wizard.open} templateId={wizard.templateId} onClose={closeWizard} />
       <header className="app-header">
         <div><h1>{T.appName}</h1><div className="sub">{T.tagline}</div></div>
         <div className="header-controls">

@@ -44,6 +44,9 @@ interface AppStore {
    *  mutate, so components never mutate stored state by accident. */
   update: (recipe: (p: Project) => void) => void;
   replaceActive: (p: Project) => void;
+  wizard: { open: boolean; templateId?: string };
+  openWizard: (templateId?: string) => void;
+  closeWizard: () => void;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
@@ -139,6 +142,9 @@ export const useStore = create<AppStore>()(
         lastPush = 0;
         set({ projects: { ...projects, [activeId]: next }, canUndo: true, canRedo: !!future.get(activeId)?.length });
       },
+      wizard: { open: false },
+      openWizard: (templateId) => set({ wizard: { open: true, templateId } }),
+      closeWizard: () => set({ wizard: { open: false } }),
       canUndo: false,
       canRedo: false,
     }),

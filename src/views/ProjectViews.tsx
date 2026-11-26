@@ -121,7 +121,7 @@ export function OverviewView() {
 
 export function TemplatesView() {
   const { p, lang, T, update } = useApp();
-  const newFrom = useStore((s) => s.newFromTemplate);
+  const openWizard = useStore((s) => s.openWizard);
   const [view, setView] = useState(p.templateId);
   const v = tplById(view);
   return (
@@ -140,7 +140,7 @@ export function TemplatesView() {
             <div className="card-head"><h3>{v.name[lang]}: {T.workflow}</h3>
               <div className="row-gap">
                 {v.id !== p.templateId && <button type="button" className="btn ghost small" onClick={() => update((pp) => { pp.templateId = v.id; pp.phase = 0; })}>{T.useTemplate}</button>}
-                <button type="button" className="btn small" onClick={() => newFrom(v.id, v.name[lang])}>{T.newFromTemplate}</button>
+                <button type="button" className="btn small" onClick={() => openWizard(v.id)}>{T.newFromTemplate}</button>
               </div></div>
             <PhaseFlow templateId={v.id} phase={v.id === p.templateId ? p.phase : 0} />
             <p className="muted small">{T.gateNote}</p>
