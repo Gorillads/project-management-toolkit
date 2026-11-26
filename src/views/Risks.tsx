@@ -25,7 +25,9 @@ function Detail({ r, lens }: { r: Risk; lens?: Lens }) {
   const { p, lang, T } = useApp();
   const goto = useGoto();
   const fields: Field[] = [
-    { k: "title", label: T.title, type: "text" },
+    { k: "title", label: T.tri.whatHappens, type: "text" },
+    { k: "cause", label: T.tri.cause, type: "textarea" },
+    { k: "consequence", label: T.tri.consequenceText, type: "textarea" },
     { k: "cat", label: T.category, type: "select", options: groupOpts(p.rCats, lang) },
     { k: "status", label: T.status, type: "select", options: opts(RISK_STATUSES, lang) },
     { k: "owner", label: T.owner, type: "ref", only: ["people"] },
@@ -96,7 +98,7 @@ export function RisksView() {
   const pick = (id: string) => setUi({ sel: { ...ui.sel, risks: id }, flash: undefined });
   const add = () => {
     const id = nextId(p, "risks");
-    update((pp) => { pp.risks.push({ id, title: "", cat: pp.rCats[0], mit: "", status: "Open", links: [], sc: Object.fromEntries(pp.rDims.map((d) => [d.id, 3])) }); });
+    update((pp) => { pp.risks.push({ id, title: "", cat: "", cause: "", consequence: "", mit: "", status: "Open", links: [], sc: { ...Object.fromEntries(pp.rDims.map((d) => [d.id, 3])), fin: 0, sched: 0, res: 0 } }); });
     pick(id);
   };
   const pin = (id: string) => update((pp) => { const x = pp.lenses.find((y) => y.id === id)!; x.pinned = !x.pinned; });

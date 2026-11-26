@@ -31,12 +31,18 @@ export interface Person extends BaseItem {
   email?: string;
   stakeholder?: string;
 }
+/** A risk is an uncertain event with a cause, whose consequence lands on
+ *  the project triangle: price (sc.fin), time (sc.sched) and resources
+ *  (sc.res), each 0-5. Quality, in the middle, is what is at stake. The
+ *  overall impact sc.i is always the highest of the three. */
 export interface Risk extends BaseItem {
   cat: string;
   owner?: string;
   mit: string;
   status: string;
   sc: Record<string, number>;
+  cause?: string;
+  consequence?: string;
 }
 export interface Issue extends BaseItem {
   prio: string;

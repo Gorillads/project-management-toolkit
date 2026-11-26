@@ -6,6 +6,8 @@ import { R_CATS, exampleProject } from "../data/projects";
 import { ListEditor } from "./CategoryEditor";
 import { activeRows, buildProject, groupAdd, groupCount, groupMove, groupRemove, groupRename, initialAnswers, key, previewIds, templateDefaults, type Answers, type GroupList } from "../lib/wizard";
 import { cleanId } from "../lib/links";
+import { looksLikeConsequence } from "../lib/riskText";
+import { TRIANGLE } from "../data/catalog";
 
 const DRAFT_KEY = "pmt-wizard-draft-v2";
 const loadDraft = (): { a: Answers; step: number } | null => { try { const v = localStorage.getItem(DRAFT_KEY); return v ? JSON.parse(v) : null; } catch { return null; } };
@@ -20,6 +22,15 @@ function Level({ value, onChange, label, five }: { value: number; onChange: (v: 
   return (
     <div className="seg small" role="radiogroup" aria-label={label}>
       {options.map(([v, l]) => <button key={v} type="button" role="radio" aria-checked={value === v} className={value === v ? "active" : ""} onClick={() => onChange(v)}>{l}</button>)}
+    </div>
+  );
+}
+
+/** 0 (no effect) to 5 (severe): the consequence on one side of the triangle. */
+function Level0({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
+  return (
+    <div className="seg small" role="radiogroup" aria-label={label}>
+      {[0, 1, 2, 3, 4, 5].map((v) => <button key={v} type="button" role="radio" aria-checked={value === v} className={value === v ? "active" : ""} onClick={() => onChange(v)}>{v === 0 ? "–" : v}</button>)}
     </div>
   );
 }
@@ -171,10 +182,19 @@ export function NewProjectWizard({ open, templateId, onClose }: { open: boolean;
               <select className="sel" aria-label={T.category} value={x.cat} onChange={(e) => setRow("risks", x.key, { cat: e.target.value })}>{R_CATS.map((c) => <option key={c} value={c}>{tv(lang, c)}</option>)}</select>
             </div>
             {x.on && <>
+              <input className="input wz-mit" aria-label={`${W.q.cause} ${i + 1}`} placeholder={W.q.cause} value={x.cause} onChange={(e) => setRow("risks", x.key, { cause: e.target.value })} />
+              {looksLikeConsequence(x.title, x.cause) && <p className="nudge wz-mit">{T.tri.nudge}</p>}
               <div className="wz-row wz-scores">
                 <span className="muted small">{W.q.prob}</span><Level five label={W.q.prob} value={x.p} onChange={(v) => setRow("risks", x.key, { p: v })} />
-                <span className="muted small">{W.q.impact}</span><Level five label={W.q.impact} value={x.i} onChange={(v) => setRow("risks", x.key, { i: v })} />
-                <span className={"badge sev " + (x.p * x.i >= 15 ? "high" : x.p * x.i >= 8 ? "med" : "low")}>{x.p * x.i}</span>
+              </div>
+              <div className="wz-row wz-scores tri-row">
+                <span className="muted small">{T.tri.consequence}:</span>
+                {TRIANGLE.map((t) => (
+                  <span key={t.key} className="tri-pick"><span className="small">{t[lang]}</span><Level0 label={`${T.tri.consequence} ${t[lang]}`} value={x[t.key]} onChange={(v) => setRow("risks", x.key, { [t.key]: v })} /></span>
+                ))}
+                {(() => { const s = x.p * Math.max(1, x.fin, x.sched, x.res); return <span className={"badge sev " + (s >= 15 ? "high" : s >= 8 ? "med" : "low")} title={T.tri.scoreHint}>{s}</span>; })()}
+              </div>
+              <div className="wz-row wz-scores">
                 <span className="muted small">{W.q.owner}</span>
                 <select className="sel" aria-label={W.q.owner} value={x.owner} onChange={(e) => setRow("risks", x.key, { owner: e.target.value })}><option value="">–</option>{rows.people.map((pp) => <option key={pp.key} value={pp.key}>{pp.name || pp.role}</option>)}</select>
               </div>
@@ -188,7 +208,7 @@ export function NewProjectWizard({ open, templateId, onClose }: { open: boolean;
           </div>
         ))}
       </div>
-      <button type="button" className="btn ghost small self-start" onClick={() => set({ risks: [...a.risks, { key: key(), id: "", title: "", cat: "Organisational", p: 3, i: 3, owner: "", affects: [], mit: "", on: true }] })}>+ {W.q.addRisk}</button>
+      <button type="button" className="btn ghost small self-start" onClick={() => set({ risks: [...a.risks, { key: key(), id: "", title: "", cat: "Organisational", cause: "", p: 3, fin: 0, sched: 0, res: 0, owner: "", affects: [], mit: "", on: true }] })}>+ {W.q.addRisk}</button>
     </>
   );
   if (step === 4) {

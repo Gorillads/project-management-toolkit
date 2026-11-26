@@ -43,8 +43,8 @@ export function projectFromTemplate(templateId: string, lang: Lang, name?: strin
   const stakeholders: Stakeholder[] = tpl.groups.map(([n, cat, type], i) => ({
     id: `S${i + 1}`, title: n[lang], cat, type, org: "", need: "", links: [], sc: scoreAll(DEFAULT_S_DIMS),
   }));
-  const risks: Risk[] = tpl.risks.map(([n, cat], i) => ({
-    id: `R${i + 1}`, title: n[lang], cat, mit: "", status: "Open", links: [], sc: scoreAll(DEFAULT_R_DIMS),
+  const risks: Risk[] = tpl.risks.map(([n, cat, cause, [fin, sched, res]], i) => ({
+    id: `R${i + 1}`, title: n[lang], cat, cause: cause[lang], consequence: "", mit: "", status: "Open", links: [], sc: { ...scoreAll(DEFAULT_R_DIMS), fin, sched, res },
   }));
   return {
     id: uid("prj"),
@@ -116,7 +116,7 @@ export function exampleProject(): Project {
     ["R2", "Key users unavailable during month-end close", "Organisational", ["S3", "S1"], "P3", "Test windows outside close; sponsor approves backfill", "Open", [3, 4, 2, 4, 1, 3, 3, 2, 2]],
     ["R3", "Warehouse staff resist new scanner workflow", "Organisational", ["S4", "S16"], "P3", "Super-users on each shift, time trial", "Open", [4, 3, 1, 2, 2, 3, 2, 3, 2]],
     ["R4", "Data migration errors in open ledgers", "Technical", ["S2", "S3", "S17", "S18"], "P2", "Three dry runs, auditor signs reconciliation", "Mitigating", [3, 5, 4, 3, 3, 5, 2, 4, 2]],
-    ["R5", "Budget overrun from change requests", "Financial", ["S1", "S14", "S6"], "P1", "Change board, 10% contingency", "Open", [2, 4, 5, 2, 1, 1, 3, 2, 3]],
+    ["R5", "Business units keep adding requirements during design", "Financial", ["S1", "S14", "S6"], "P1", "Change board, 10% contingency", "Open", [2, 4, 5, 2, 1, 1, 3, 2, 3]],
     ["R6", "Invoicing disruption at go-live", "Commercial", ["S10", "S11", "S3"], "P4", "Parallel invoicing for two weeks", "Open", [2, 5, 4, 1, 5, 3, 1, 3, 2]],
     ["R7", "Works council approval comes late", "Organisational", ["S16"], "P5", "Early briefing on scanner logging", "Open", [2, 3, 1, 3, 1, 1, 3, 1, 4]],
     ["R8", "Webshop integration fails in test", "Technical", ["S2", "S14", "S12"], "P8", "Mock API in sprint 2, CSV fallback", "Open", [3, 3, 2, 3, 2, 3, 4, 2, 3]],
@@ -127,6 +127,24 @@ export function exampleProject(): Project {
     ["R13", "Owners demand cost cuts mid-project", "Financial", ["S6", "S7"], "P10", "Quarterly benefits report to the board", "Watching", [2, 4, 4, 3, 1, 2, 2, 2, 5]],
   ] as [string, string, string, string[], string, string, string, number[]][]).map(([id, title, cat, links, owner, mit, status, sc]) => ({ id, title, cat, links, owner, mit, status, sc: rd(sc) }));
 
+  // Why each risk could happen, and how hard it would hit resources (price
+  // and time come from the scores above).
+  const why: Record<string, [string, number, string]> = {
+    R1: ["The vendor runs several go-lives in the same quarter", 3, "Configuration complete slips 4–6 weeks"],
+    R2: ["Testing is planned in the same weeks as month-end close", 4, "Test cycles stretch, finance works overtime"],
+    R3: ["The new scanners add steps for night-shift staff", 3, "Lower picking speed in the first months"],
+    R4: ["Old ledgers hold years of manual corrections", 4, "Extra dry run and auditor hours"],
+    R5: ["There is no change board until design is signed off", 2, "Contingency used up before build starts"],
+    R6: ["Invoice templates and VAT codes are rebuilt from scratch", 2, "Late invoices to key accounts in the first weeks"],
+    R7: ["Scanner logging touches employee monitoring rules", 1, "Warehouse rollout waits for approval"],
+    R8: ["The webshop API is undocumented", 3, "Manual order entry until fixed"],
+    R9: ["A merger project starts on the same board agenda", 2, "Slower decisions on scope and budget"],
+    R10: ["The covenant test date falls right after go-live", 1, "Bank waiver costs and owner scrutiny"],
+    R11: ["The 3PL builds a new label API in parallel", 2, "Manual labels for 4 weeks"],
+    R12: ["Delivery dates are wrong while stock data settles", 2, "Account managers spend weeks on recovery calls"],
+    R13: ["Group results are weak this year", 3, "Scope cut mid-project"],
+  };
+  for (const r of R) { const w = why[r.id]; if (w) { r.cause = w[0]; r.sc.res = w[1]; r.consequence = w[2]; } }
   const base = projectFromTemplate("it", "en", "ERP rollout");
   return {
     ...base,

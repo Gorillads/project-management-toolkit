@@ -3,7 +3,7 @@ import { persist, createJSONStorage, type StateStorage } from "zustand/middlewar
 import type { Lang, Project } from "../model/types";
 import { exampleProject, projectFromTemplate } from "../data/projects";
 import { tplById } from "../data/templates";
-import { LEGACY_STATUS } from "../data/catalog";
+import { DEFAULT_R_DIMS, LEGACY_STATUS, impactOf } from "../data/catalog";
 import { syncCats } from "../lib/categories";
 
 export const MAX_PROJECTS = 10;
@@ -74,6 +74,11 @@ function remember(id: string, prev: Project) {
   future.set(id, []);
 }
 
+/** Keep each risk's overall impact equal to its worst triangle consequence. */
+export function syncImpact(p: Project) {
+  for (const r of p.risks) { if (r.sc) r.sc.i = impactOf(r.sc); }
+}
+
 /** Make stored data safe to render: every item gets the text fields and
  *  lists the views expect, whatever an older version or an import left. */
 export function repairProject(p: Project): Project {
@@ -101,6 +106,11 @@ export function repairProject(p: Project): Project {
   for (const k of ["budget", "files", "raci", "raciPeople", "analyses", "lenses", "sDims", "rDims", "sCats", "rCats", "pGroups"] as const) if (!Array.isArray(p[k])) (p as unknown as Record<string, unknown>)[k] = [];
   p.swot ??= { s: [], w: [], o: [], t: [] };
   p.templateId = tplById(p.templateId ?? "general").id;
+  // Risk dimensions follow the triangle: built-ins get their current names,
+  // and "resources" is added where it was missing (scored 0 = not assessed).
+  for (const d of DEFAULT_R_DIMS) { const have = p.rDims.find((x) => x.id === d.id); if (have) have.name = d.name; else p.rDims.splice(p.rDims.findIndex((x) => x.id === "sched") + 1 || p.rDims.length, 0, { ...d }); }
+  for (const r of p.risks) { r.sc ??= {}; r.sc.res ??= 0; r.sc.fin ??= 0; r.sc.sched ??= 0; if (typeof r.cause !== "string") r.cause = ""; if (typeof r.consequence !== "string") r.consequence = ""; }
+  syncImpact(p);
   syncCats(p);
   return p;
 }
@@ -151,6 +161,7 @@ export const useStore = create<AppStore>()(
         const { activeId, projects } = get();
         const draft = structuredClone(projects[activeId]);
         recipe(draft);
+        syncImpact(draft);
         remember(activeId, projects[activeId]);
         set({ projects: { ...projects, [activeId]: draft }, canUndo: true, canRedo: false });
       },
@@ -193,6 +204,8 @@ export const useStore = create<AppStore>()(
         return s as never;
       },
       // Runs on every load, after any migration.
+      // Write the repaired data back once loaded, so storage matches what is shown.
+      onRehydrateStorage: () => () => { setTimeout(() => useStore.setState({}), 0); },
       merge: (persisted, current) => {
         const s = { ...current, ...(persisted as Partial<AppStore>) };
         for (const p of Object.values(s.projects ?? {})) repairProject(p);

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { Analysis, Lens, Project } from "../model/types";
 import { useApp, useGoto } from "./ui";
-import { openIssueOf, pScore, risksFor, sev } from "../lib/links";
+import { openIssueOf, pScore, risksFor, score, sev } from "../lib/links";
+import { TRIANGLE } from "../data/catalog";
 
 export const dimName = (p: Project, kind: "S" | "R", id: string, lang: "da" | "en") =>
   (kind === "S" ? p.sDims : p.rDims).find((d) => d.id === id)?.name[lang] ?? id;
@@ -128,5 +129,64 @@ export function Network({ cat }: { cat: string }) {
         </g>
       ))}
     </svg>
+  );
+}
+
+/** The project triangle: price, time and resources at the corners and
+ *  quality in the middle. Each risk sits towards the sides its consequence
+ *  hits (weighted by how hard), sized by probability and coloured by score. */
+export function QualityTriangle({ selected, onPick }: { selected?: string; onPick?: (id: string) => void }) {
+  const { p, lang, T } = useApp();
+  const W = 420, H = 360;
+  const C = { sched: [W / 2, 46], fin: [62, 300], res: [W - 62, 300] } as const;
+  const assessed = p.risks.filter((r) => Math.max(r.sc.fin ?? 0, r.sc.sched ?? 0, r.sc.res ?? 0) > 0);
+  const used = new Map<string, number>();
+  const col = { high: "var(--danger)", med: "var(--warn)", low: "var(--ok)" };
+  const dots = assessed.map((r) => {
+    // Squared weights pull a risk clearly towards the side it hits hardest.
+    const w = { fin: (r.sc.fin ?? 0) ** 2, sched: (r.sc.sched ?? 0) ** 2, res: (r.sc.res ?? 0) ** 2 };
+    const sum = w.fin + w.sched + w.res;
+    let x = (w.fin * C.fin[0] + w.sched * C.sched[0] + w.res * C.res[0]) / sum;
+    let y = (w.fin * C.fin[1] + w.sched * C.sched[1] + w.res * C.res[1]) / sum;
+    // Pull in from the corners a little, then spread risks that share a spot.
+    x = W / 2 + (x - W / 2) * 0.8; y = 215 + (y - 215) * 0.8;
+    const k = `${Math.round(x / 14)}:${Math.round(y / 14)}`;
+    const n = used.get(k) ?? 0; used.set(k, n + 1);
+    if (n) { const a = n * 2.4; x += Math.cos(a) * 20 * Math.ceil(n / 6); y += Math.sin(a) * 20 * Math.ceil(n / 6); }
+    return { r, x, y, rad: 5 + (r.sc.p ?? 1) * 1.6, s: score(r, "p", "i") };
+  });
+  const exposure = (k: "fin" | "sched" | "res") => p.risks.reduce((a, r) => a + (r.sc.p ?? 0) * (r.sc[k] ?? 0), 0);
+  const label = (k: "fin" | "sched" | "res") => TRIANGLE.find((t) => t.key === k)![lang];
+  const unassessed = p.risks.filter((r) => !assessed.includes(r));
+  return (
+    <div className="tri-wrap">
+      <svg viewBox={`0 0 ${W} ${H}`} className="tri-svg" role="img" aria-label={T.tri.title}>
+        <polygon points={`${C.sched.join(",")} ${C.fin.join(",")} ${C.res.join(",")}`} className="tri-shape" />
+        <text x={W / 2} y={222} textAnchor="middle" className="tri-quality">{T.tri.quality.toUpperCase()}</text>
+        {(["sched", "fin", "res"] as const).map((k) => {
+          const [x, y] = C[k];
+          const ty = k === "sched" ? y - 18 : y + 30;
+          return (
+            <g key={k}>
+              <text x={x} y={ty} textAnchor="middle" className="tri-corner">{label(k)}</text>
+              <text x={x} y={ty + 15} textAnchor="middle" className="tri-exp"><title>{T.tri.exposureHint}</title>{T.tri.exposure} {exposure(k)}</text>
+            </g>
+          );
+        })}
+        {dots.map(({ r, x, y, rad, s }) => (
+          <g key={r.id} className={"tri-dot" + (selected === r.id ? " selected" : "")} onClick={() => onPick?.(r.id)} role="button" tabIndex={0} aria-label={`${r.id} ${r.title}`}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick?.(r.id); } }}>
+            <title>{`${r.id} ${r.title}\n${label("fin")} ${r.sc.fin ?? 0} · ${label("sched")} ${r.sc.sched ?? 0} · ${label("res")} ${r.sc.res ?? 0}`}</title>
+            <circle cx={x} cy={y} r={rad} fill={col[sev(s)]} />
+            <text x={x + rad + 3} y={y + 4} className="tri-id">{r.id}</text>
+          </g>
+        ))}
+      </svg>
+      {unassessed.length > 0 && (
+        <div className="tri-unassessed"><span className="muted small">{T.tri.notAssessed}:</span>
+          {unassessed.map((r) => <button key={r.id} type="button" className={"rk" + (selected === r.id ? " selected" : "")} onClick={() => onPick?.(r.id)} title={r.title}>{r.id}</button>)}
+        </div>
+      )}
+    </div>
   );
 }

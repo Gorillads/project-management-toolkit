@@ -27,6 +27,7 @@ export function readiness(p: Project): Step[] {
     d.serves.length > 0 || (!!d.parent && depth < 20 && (() => { const par = p.deliverables.find((x) => x.id === d.parent); return !!par && hasReason(par, depth + 1); })());
   const reasoned = p.deliverables.filter((d) => hasReason(d));
   const owned = p.risks.filter((r) => r.owner && r.mit.trim());
+  const caused = p.risks.filter((r) => (r.cause ?? "").trim() && Math.max(r.sc.fin ?? 0, r.sc.sched ?? 0, r.sc.res ?? 0) > 0);
   const linked = p.risks.filter((r) => r.links.some((id) => ["S", "P", "DL"].includes(kindOf(p, id))));
   const agreed = [...p.criteria, ...p.deliverables].filter((x) => x.status === "Agreed");
   const first = <T extends { id: string }>(all: T[], ok: T[]) => all.find((x) => !ok.includes(x))?.id;
@@ -42,6 +43,7 @@ export function readiness(p: Project): Step[] {
     { key: "team", done: p.people.length > 0, have: p.people.length, view: "actors" },
     { key: "stakeholders", done: p.stakeholders.length > 0, have: p.stakeholders.length, view: "actors" },
     { key: "risks", done: p.risks.length > 0, have: p.risks.length, view: "risks" },
+    every("riskCause", p.risks, caused, "risks"),
     every("riskOwned", p.risks, owned, "risks"),
     every("riskLinked", p.risks, linked, "risks"),
     { key: "agreed", done: agreed.length > 0 && agreed.length === p.criteria.length + p.deliverables.length, have: agreed.length, of: p.criteria.length + p.deliverables.length, view: "purpose",

@@ -47,7 +47,15 @@ Every project starts with the **core**:
 - **Actors**: the team running the project and the stakeholders around it,
   in one list, with each stakeholder on the power/interest grid. Selecting an
   actor shows the risks they own or are affected by.
-- **Risks**: probability, impact, owner and the actors each risk affects.
+- **Risks**: what could happen and why (the cause), its probability, and its
+  consequence on the three sides of the project triangle: **price, time and
+  resources** (0–5 each), with quality in the middle as what is at stake. A
+  risk's overall impact is the worst of the three. "Deadline slips" or "Budget
+  overrun" are consequences, not risks: a risk named like that, without a
+  cause, gets a nudge to describe what could cause it. The **quality
+  triangle** places each risk towards the sides it threatens and shows the
+  exposure per side. Every project type suggests risks as events with a cause
+  and a typical consequence.
 
 Everything else is an **add-on**, switched on from "Add tools" on the
 Overview when the project needs it: stakeholder analysis (12 dimensions,

@@ -11,7 +11,8 @@ import { syncCats } from "./categories";
  *  user typed, if anything. */
 export interface WzPerson { key: string; id: string; name: string; role: string; group: string }
 export interface WzStake { key: string; id: string; name: string; cat: string; type: "Internal" | "External"; power: number; interest: number; on: boolean }
-export interface WzRisk { key: string; id: string; title: string; cat: string; p: number; i: number; owner: string; affects: string[]; mit: string; on: boolean }
+/** A risk in the setup: the event, its cause, and its consequence on price, time and resources (0-5). */
+export interface WzRisk { key: string; id: string; title: string; cat: string; cause: string; p: number; fin: number; sched: number; res: number; owner: string; affects: string[]; mit: string; on: boolean }
 export interface Answers {
   templateId: string;
   name: string;
@@ -87,7 +88,7 @@ export function templateDefaults(templateId: string, lang: Lang): Pick<Answers, 
   const tpl = tplById(templateId);
   return {
     stakes: tpl.groups.map(([name, , type], i) => ({ key: key(), id: "", name: name[lang], cat: "", type, power: i < 2 ? 4 : 3, interest: type === "Internal" ? 4 : 3, on: true })),
-    risks: tpl.risks.map(([title, cat]) => ({ key: key(), id: "", title: title[lang], cat, p: 3, i: 3, owner: "", affects: [], mit: "", on: true })),
+    risks: tpl.risks.map(([title, cat, cause, [fin, sched, res]]) => ({ key: key(), id: "", title: title[lang], cat, cause: cause[lang], p: 3, fin, sched, res, owner: "", affects: [], mit: "", on: true })),
   };
 }
 
@@ -120,8 +121,8 @@ export function buildProject(a: Answers, lang: Lang): Project {
   });
   p.risks = rows.risks.map((x) => {
     const sc = Object.fromEntries(p.rDims.map((d) => [d.id, 3]));
-    sc.p = x.p; sc.i = x.i;
-    return { id: ids.get(x.key)!, title: x.title.trim(), cat: x.cat, status: "Open", mit: x.mit.trim(), owner: x.owner ? ids.get(x.owner) : undefined, links: x.affects.map((k) => ids.get(k)).filter(Boolean) as string[], sc };
+    sc.p = x.p; sc.fin = x.fin; sc.sched = x.sched; sc.res = x.res; sc.i = Math.max(1, x.fin, x.sched, x.res);
+    return { id: ids.get(x.key)!, title: x.title.trim(), cat: x.cat, cause: (x.cause ?? "").trim(), consequence: "", status: "Open", mit: x.mit.trim(), owner: x.owner ? ids.get(x.owner) : undefined, links: x.affects.map((k) => ids.get(k)).filter(Boolean) as string[], sc };
   });
   p.pGroups = [...a.pGroups];
   p.sCats = [...a.sCats];

@@ -19,9 +19,10 @@ export const DEFAULT_S_DIMS: Dim[] = [
 ];
 export const DEFAULT_R_DIMS: Dim[] = [
   { id: "p", name: L("Probability", "Sandsynlighed") },
-  { id: "i", name: L("Impact (overall)", "Konsekvens (samlet)") },
-  { id: "fin", name: L("Financial impact", "Økonomisk konsekvens") },
-  { id: "sched", name: L("Schedule impact", "Konsekvens for tidsplan") },
+  { id: "i", name: L("Impact (highest of price, time, resources)", "Konsekvens (højeste af pris, tid, ressourcer)") },
+  { id: "fin", name: L("Consequence: price", "Konsekvens: pris") },
+  { id: "sched", name: L("Consequence: time", "Konsekvens: tid") },
+  { id: "res", name: L("Consequence: resources", "Konsekvens: ressourcer") },
   { id: "rep", name: L("Reputation impact", "Konsekvens for omdømme") },
   { id: "qual", name: L("Quality impact", "Konsekvens for kvalitet") },
   { id: "prox", name: L("Proximity (how soon)", "Nærhed (hvor snart)") },
@@ -44,6 +45,10 @@ export const CRITERION_STATUSES = ["Draft", "Agreed"];
 export const DELIVERABLE_STATUSES = ["Draft", "Agreed"];
 /** Statuses from earlier versions, read as the nearest shaping state. */
 export const LEGACY_STATUS: Record<string, string> = { "Not measured": "Draft", "Not started": "Draft", "In progress": "Draft", "At risk": "Draft", "Not met": "Draft", "On track": "Agreed", Met: "Agreed", Delivered: "Agreed", Accepted: "Agreed" };
+/** The project triangle: the three factors a risk's consequence lands on. */
+export const TRIANGLE = [{ key: "fin", en: "Price", da: "Pris" }, { key: "sched", en: "Time", da: "Tid" }, { key: "res", en: "Resources", da: "Ressourcer" }] as const;
+/** Overall impact = the worst consequence on the triangle (at least 1). */
+export const impactOf = (sc: Record<string, number>) => Math.max(1, sc.fin ?? 0, sc.sched ?? 0, sc.res ?? 0);
 /** Stands for the project's purpose in `serves`, which is not an item. */
 export const ROOT = "PURPOSE";
 export const ENG_LEVELS = [L("Unaware", "Uvidende"), L("Resistant", "Modstander"), L("Neutral", "Neutral"), L("Supportive", "Støtter"), L("Leading", "Driver")];
