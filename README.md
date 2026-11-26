@@ -46,6 +46,15 @@ and risks), the team, the stakeholders (with power and interest), the risks
 review that shows the IDs everything will get. Unfinished answers are kept if
 the dialog is closed.
 
+Project types are broad categories, each suggesting typical stakeholders,
+risks, phases, decisions and add-on tools: General project, Construction &
+Engineering, IT & Software Development, Marketing & Creative, Research &
+Development, Event planning, Organisational change & HR, Operations & Process
+improvement, Product launch, Education & Training, Public sector & Non-profit,
+and Finance, Legal & Compliance. Projects made with an earlier, narrower type
+(ERP rollout, app launch, restructuring, office move) are mapped to the
+matching category.
+
 ## Working in it
 
 - **Search** (Ctrl+K) finds any item by ID or words in its title, role,

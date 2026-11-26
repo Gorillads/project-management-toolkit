@@ -126,7 +126,7 @@ export function exampleProject(): Project {
     ["R13", "Owners demand cost cuts mid-project", "Financial", ["S6", "S7"], "P10", "Quarterly benefits report to the board", "Watching", [2, 4, 4, 3, 1, 2, 2, 2, 5]],
   ] as [string, string, string, string[], string, string, string, number[]][]).map(([id, title, cat, links, owner, mit, status, sc]) => ({ id, title, cat, links, owner, mit, status, sc: rd(sc) }));
 
-  const base = projectFromTemplate("erp", "en", "ERP rollout");
+  const base = projectFromTemplate("it", "en", "ERP rollout");
   return {
     ...base,
     id: "example",

@@ -135,7 +135,7 @@ export function OverviewView() {
 export function TemplatesView() {
   const { p, lang, T, update } = useApp();
   const openWizard = useStore((s) => s.openWizard);
-  const [view, setView] = useState(p.templateId);
+  const [view, setView] = useState(tplById(p.templateId).id);
   const v = tplById(view);
   return (
     <>

@@ -422,3 +422,5 @@ dialog.wizard::backdrop { background: rgba(20,24,31,.5); }
 .wz-ids { display: flex; flex-wrap: wrap; gap: 4px 16px; }
 @media (max-width: 760px) { .wz-line.people > .id-in { grid-column: 1; } }
 .type-contact { border: 1px dashed var(--ok); color: var(--ok); }
+.wz-types { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.wz-types .tpl { padding: 9px 11px; }
